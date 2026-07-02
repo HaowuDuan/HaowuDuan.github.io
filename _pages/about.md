@@ -10,12 +10,10 @@ profile:
   more_info: >
     <p>段昊武 (Haowu Duan)</p>
     <p>hwdcgc [at] gmail.com</p>
-selected_papers: true
+selected_papers: false
 social: true
 announcements:
-  enabled: true
-  scrollable: true
-  limit: 5
+  enabled: false
 latest_posts:
   enabled: true
   scrollable: true
