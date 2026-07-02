@@ -41,8 +41,10 @@ cv:
         end_date: present
         summary: Department of Physics
 
-    Research Interests:
-      - "High energy QCD; entanglement property of field theory; eigenstate thermalization; stochastic process; functional renormalization group; electron-ion collider physics and gluon saturation; critical behavior of field theories."
+    Interests:
+      - name: Research Areas
+        icon: fa-solid fa-tag
+        keywords: "High energy QCD, entanglement property of field theory, eigenstate thermalization, stochastic process, functional renormalization group, electron-ion collider physics and gluon saturation, critical behavior of field theories"
 
     Talks and Conferences:
       - company: Lawrence Berkeley National Laboratory
