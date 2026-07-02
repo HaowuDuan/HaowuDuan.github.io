@@ -3,7 +3,7 @@ layout: page
 permalink: /llm-book/
 title: LLM notes
 nav: true
-nav_order: 2
+nav_order: 6
 description: Haowu's working knowledge on LLM
 toc:
   sidebar: left
