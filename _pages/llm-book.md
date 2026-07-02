@@ -1,30 +1,15 @@
 ---
-layout: page
+layout: book
 permalink: /llm-book/
-title: LLM notes
+title: LLM Notes
 nav: true
 nav_order: 6
 description: Haowu's working knowledge on LLM
-toc:
-  sidebar: left
 ---
 
-## 1. Introduction
+A growing collection of notes on large language models — architecture, training, alignment, and scaling.
 
-*Coming soon.*
-
-## 2. Transformer Architecture
-
-*Coming soon.*
-
-## 3. Training and Optimization
-
-*Coming soon.*
-
-## 4. Reinforcement Learning from Human Feedback
-
-*Coming soon.*
-
-## 5. Scaling Laws
-
-*Coming soon.*
+{% assign chapters = site.llm_notes | sort: 'order' %}
+{% for chapter in chapters %}
+{{ forloop.index }}. [{{ chapter.title }}]({{ chapter.url | relative_url }})
+{% endfor %}
