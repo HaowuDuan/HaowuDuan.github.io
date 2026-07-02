@@ -5,7 +5,7 @@ permalink: /
 subtitle: Theoretical Physicist · ML Researcher
 profile:
   align: right
-  image: prof_pic.jpg
+  image:
   image_circular: false
   more_info: >
     <p>段昊武 (Haowu Duan)</p>
