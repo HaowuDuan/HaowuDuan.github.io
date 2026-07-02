@@ -42,95 +42,148 @@ cv:
         summary: Department of Physics
 
     Research Interests:
-      - name: Research Areas
-        keywords: "High energy QCD, entanglement property of field theory, eigenstate thermalization, stochastic process, functional renormalization group, electron-ion collider physics and gluon saturation, critical behavior of field theories"
+      - "High energy QCD; entanglement property of field theory; eigenstate thermalization; stochastic process; functional renormalization group; electron-ion collider physics and gluon saturation; critical behavior of field theories."
 
     Talks and Conferences:
-      - title: Invited seminar at Lawrence Berkeley National Laboratory
-        date: 2025-07-02
+      - company: Lawrence Berkeley National Laboratory
+        position: Invited seminar
+        location: Berkeley, CA
+        start_date: 2025-07
+        end_date: 2025-07
         summary: "Talk on Born-Oppenheimer renormalization group"
 
-      - title: SURGE collaboration meeting at UCLA
-        date: 2025-06-23
+      - company: SURGE collaboration meeting
+        position: Talk
+        location: UCLA
+        start_date: 2025-06
+        end_date: 2025-06
         summary: "Talk on Born-Oppenheimer renormalization group"
 
-      - title: RHIC & AGS User Meeting, 2024
-        date: 2024-06-11
+      - company: RHIC & AGS User Meeting
+        position: Talk
+        start_date: 2024-06
+        end_date: 2024-06
         summary: "Talk on rho meson production in UPC"
 
-      - title: EIC Theory Institute at BNL, visitor
-        date: 2023-07-01
-        summary: "Visiting researcher, July 2023"
+      - company: EIC Theory Institute at BNL
+        position: Visitor
+        start_date: 2023-07
+        end_date: 2023-07
 
-      - title: SURGE Collaboration meeting
-        date: 2023-06-28
+      - company: SURGE Collaboration meeting
+        position: Talk
+        start_date: 2023-06
+        end_date: 2023-06
         summary: "Talk on Color neutralization and an improved Gaussian model"
 
-      - title: Quantum computing bootcamp at Jefferson Lab
-        date: 2023-06-20
-        summary: "Attended lectures"
+      - company: Quantum computing bootcamp
+        position: Participant
+        location: Jefferson Lab
+        start_date: 2023-06
+        end_date: 2023-06
 
-      - title: Stony Brook University, Center for Nuclear Theory seminar
-        date: 2023-04-19
+      - company: Stony Brook University, Center for Nuclear Theory
+        position: Seminar
+        start_date: 2023-04
+        end_date: 2023-04
         summary: "Talk on classical entanglement"
 
-      - title: "GHP2023: The 10th Biennial Workshop of the APS Topical Group on Hadronic Physics"
-        date: 2023-04-12
+      - company: "GHP2023: 10th Biennial Workshop of APS Topical Group on Hadronic Physics"
+        position: Talk
+        start_date: 2023-04
+        end_date: 2023-04
         summary: "Talk on double gluon production and particle collectivity in UPC"
 
-      - title: "DIS2023: XXX International Workshop on Deep-Inelastic Scattering"
-        date: 2023-03-21
+      - company: "DIS2023: XXX International Workshop on Deep-Inelastic Scattering"
+        position: Talk
+        start_date: 2023-03
+        end_date: 2023-03
         summary: "Talk on particle collectivity in UPC"
 
-      - title: Intersection of nuclear structure and high energy nuclear collisions workshop
-        date: 2023-01-23
+      - company: Intersection of nuclear structure and high energy nuclear collisions workshop
+        position: Talk
+        start_date: 2023-01
+        end_date: 2023-02
         summary: "Talk on double gluon production in UPC"
 
-      - title: HUGS 2022 Summer school, Jefferson Lab
-        date: 2022-06-01
-        summary: "Student talk on two particle correlation in UPC"
+      - company: HUGS 2022 Summer school
+        position: Student talk
+        location: Jefferson Lab
+        start_date: 2022-06
+        end_date: 2022-06
+        summary: "Talk on two particle correlation in UPC"
 
-      - title: 2022 CFNS Summer School, Stony Brook University
-        date: 2022-07-11
+      - company: 2022 CFNS Summer School
+        position: Participant
+        location: Stony Brook University
+        start_date: 2022-07
+        end_date: 2022-07
 
-      - title: Correlations in Partonic and Hadronic Interactions, Duke University
-        date: 2022-03-07
+      - company: Correlations in Partonic and Hadronic Interactions
+        position: Talk
+        location: Duke University
+        start_date: 2022-03
+        end_date: 2022-03
         summary: "Talk on double gluon production in UPC"
 
-      - title: 61st Cracow School of Theoretical Physics
-        date: 2021-09-20
+      - company: 61st Cracow School of Theoretical Physics
+        position: Participant
+        start_date: 2021-09
+        end_date: 2021-09
 
-      - title: 2021 CFNS Summer School
-        date: 2021-08-09
+      - company: 2021 CFNS Summer School
+        position: Participant
+        start_date: 2021-08
+        end_date: 2021-08
 
-      - title: 2021 EIC UG Meeting early career workshop
-        date: 2021-07-29
+      - company: 2021 EIC UG Meeting early career workshop
+        position: Talk
+        start_date: 2021-07
+        end_date: 2021-07
         summary: "Talk on entanglement entropy and gluon quasi-particles"
 
-      - title: "DIS 2021"
-        date: 2021-04-12
+      - company: "DIS 2021"
+        position: Talk
+        start_date: 2021-04
+        end_date: 2021-04
         summary: "Talk on entanglement entropy at small x; conference proceeding"
 
-      - title: Initial Stages 2021
-        date: 2021-01-10
+      - company: Initial Stages 2021
+        position: Talk
+        start_date: 2021-01
+        end_date: 2021-01
         summary: "Talk on Entanglement, partial set of measurements, and diagonality of the density matrix in the parton model"
 
-      - title: Resummation, Evolution, Factorization 2020
-        date: 2020-12-07
+      - company: Resummation, Evolution, Factorization 2020
+        position: Talk
+        start_date: 2020-12
+        end_date: 2020-12
         summary: "Talk on Entanglement, partial set of measurements, and diagonality of the density matrix in the parton model"
 
-      - title: 2019 Tri-Institute Summer School on Elementary Particles (TRISEP), TRIUMF, Vancouver
-        date: 2019-07-22
+      - company: 2019 Tri-Institute Summer School on Elementary Particles (TRISEP)
+        position: Participant
+        location: TRIUMF, Vancouver
+        start_date: 2019-07
+        end_date: 2019-08
 
-      - title: HUGS 2019 Summer school, Jefferson Lab
-        date: 2019-06-01
+      - company: HUGS 2019 Summer school
+        position: Participant
+        location: Jefferson Lab
+        start_date: 2019-06
+        end_date: 2019-06
 
-      - title: The 8th workshop of Group of Hadronic Physics at APS, Denver
-        date: 2019-04-01
+      - company: The 8th workshop of Group of Hadronic Physics at APS
+        position: Talk
+        location: Denver
+        start_date: 2019-04
+        end_date: 2019-04
         summary: "Talk on Entanglement at small x"
 
-      - title: Workshop on the collectivities of small systems in high energy collisions, Rice University
-        date: 2019-03-01
+      - company: Workshop on the collectivities of small systems in high energy collisions
+        position: Participant
+        location: Rice University
+        start_date: 2019-03
+        end_date: 2019-03
 
     Skills:
       - name: Programming
