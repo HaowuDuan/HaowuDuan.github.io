@@ -202,6 +202,15 @@ collections:
       - training-and-optimization.md
       - rlhf.md
       - scaling-laws.md
+  diffusion_notes:
+    output: true
+    permalink: /diffusion-models/:path/
+  rl_notes:
+    output: true
+    permalink: /reinforcement-learning/:path/
+  gpu_notes:
+    output: true
+    permalink: /gpus/:path/
 
 # -----------------------------------------------------------------------------
 # Jekyll settings
@@ -300,6 +309,26 @@ defaults:
       path: "assets"
     values:
       sitemap: false
+  - scope:
+      type: llm_notes
+    values:
+      book_title: LLM Notes
+      book_index: /llm-book/
+  - scope:
+      type: diffusion_notes
+    values:
+      book_title: Diffusion Models
+      book_index: /diffusion-models/
+  - scope:
+      type: rl_notes
+    values:
+      book_title: Reinforcement Learning
+      book_index: /reinforcement-learning/
+  - scope:
+      type: gpu_notes
+    values:
+      book_title: GPUs
+      book_index: /gpus/
 
 sass:
   style: compressed

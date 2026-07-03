@@ -107,7 +107,8 @@ layout: default
     <article>
       {{ content }}
     </article>
-    {% assign chapters = site.llm_notes | sort: 'order' %}
+    {% assign collection_name = page.collection | default: page.book_collection %}
+    {% assign chapters = site[collection_name] | sort: 'order' %}
     {% assign prev_chapter = nil %}
     {% assign next_chapter = nil %}
     {% assign found = false %}

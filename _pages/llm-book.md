@@ -2,8 +2,10 @@
 layout: book
 permalink: /llm-book/
 title: LLM Notes
-nav: true
-nav_order: 6
+nav: false
+book_title: LLM Notes
+book_collection: llm_notes
+book_index: /llm-book/
 description: Haowu's working knowledge on LLM
 ---
 
