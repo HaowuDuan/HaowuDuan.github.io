@@ -102,6 +102,12 @@ cv:
         end_date: 2023-03
         summary: "Talk on particle collectivity in UPC"
 
+      - company: Course on Light-Cone Techniques applied to QCD
+        position: Participant
+        location: Online
+        start_date: 2022-11
+        end_date: 2022-11
+
       - company: Intersection of nuclear structure and high energy nuclear collisions workshop
         position: Talk
         start_date: 2023-01
@@ -137,6 +143,12 @@ cv:
         position: Participant
         start_date: 2021-08
         end_date: 2021-08
+
+      - company: High-Energy and Nuclear Physics within Quantum Technologies
+        position: Participant
+        location: Online
+        start_date: 2021-06
+        end_date: 2021-07
 
       - company: 2021 EIC UG Meeting early career workshop
         position: Talk
