@@ -1,0 +1,57 @@
+---
+import Base from '../layouts/Base.astro';
+import { getPublications } from '../lib/bibtex';
+
+const pubs = getPublications();
+---
+
+<Base title="Publications">
+  <h1>Publications</h1>
+  <ol class="pub-list" reversed>
+    {pubs.map(pub => (
+      <li class="pub-entry">
+        <div class="pub-meta">
+          {pub.abbr && <span class="badge">{pub.abbr}</span>}
+          <span class="year">{pub.year}</span>
+        </div>
+        <div class="pub-details">
+          <h3 class="pub-title">{pub.title}</h3>
+          <p class="pub-authors">{pub.author}</p>
+          <p class="pub-journal">
+            {pub.journal}
+            {pub.volume && ` ${pub.volume}`}
+            {pub.pages && ` (${pub.pages})`}
+            {pub.year && `, ${pub.year}`}
+          </p>
+          <div class="pub-links">
+            {pub.doi && <a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener">DOI</a>}
+            {pub.eprint && <a href={`https://arxiv.org/abs/${pub.eprint}`} target="_blank" rel="noopener">arXiv</a>}
+            {pub.inspirehep_id && <a href={`https://inspirehep.net/literature/${pub.inspirehep_id}`} target="_blank" rel="noopener">InspireHEP</a>}
+          </div>
+        </div>
+      </li>
+    ))}
+  </ol>
+</Base>
+
+<style>
+  .pub-list { list-style: none; padding: 0; }
+  .pub-entry {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .pub-meta {
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  .year { font-size: 0.85rem; color: var(--text-secondary); }
+  .pub-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; margin-top: 0; }
+  .pub-authors { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+  .pub-journal { font-size: 0.85rem; color: var(--text-secondary); font-style: italic; margin-bottom: 0.5rem; }
+  .pub-links { display: flex; gap: 0.75rem; font-size: 0.85rem; }
+</style>

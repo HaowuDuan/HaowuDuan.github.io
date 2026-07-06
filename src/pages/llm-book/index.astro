@@ -1,0 +1,25 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getNotes } from '../../lib/notes';
+
+const chapters = await getNotes('llm-notes');
+---
+
+<Base title="LLM Notes">
+  <h1>LLM Notes</h1>
+  <p style="margin-bottom: 2rem;">Notes on large language models from a physics perspective.</p>
+  {chapters.length === 0 ? (
+    <p style="color: var(--text-secondary);">No chapters yet.</p>
+  ) : (
+    <ol class="chapter-list">
+      {chapters.map(ch => (
+        <li><a href={`/llm-book/${ch.id}/`}>{ch.data.title}</a></li>
+      ))}
+    </ol>
+  )}
+</Base>
+
+<style>
+  .chapter-list { padding-left: 1.5rem; }
+  .chapter-list li { padding: 0.4rem 0; }
+</style>

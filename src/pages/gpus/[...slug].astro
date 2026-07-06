@@ -1,0 +1,31 @@
+---
+import Book from '../../layouts/Book.astro';
+import { getCollection, render } from 'astro:content';
+import { getNotes } from '../../lib/notes';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('gpu-notes');
+  return entries.map(e => ({ params: { slug: e.id }, props: { entry: e } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const sorted = await getNotes('gpu-notes');
+const chapters = sorted.map(ch => ({ title: ch.data.title, slug: ch.id, url: `/gpus/${ch.id}/` }));
+const idx = sorted.findIndex(ch => ch.id === entry.id);
+const prevChapter = idx > 0 ? { title: sorted[idx - 1].data.title, url: `/gpus/${sorted[idx - 1].id}/` } : null;
+const nextChapter = idx < sorted.length - 1 ? { title: sorted[idx + 1].data.title, url: `/gpus/${sorted[idx + 1].id}/` } : null;
+---
+
+<Book
+  title={entry.data.title}
+  math={entry.data.math}
+  bookTitle="GPUs"
+  bookIndex="/gpus/"
+  chapters={chapters}
+  prevChapter={prevChapter}
+  nextChapter={nextChapter}
+>
+  <Content />
+</Book>

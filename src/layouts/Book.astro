@@ -1,0 +1,124 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  math?: boolean;
+  bookTitle: string;
+  bookIndex: string;
+  chapters: { title: string; slug: string; url: string }[];
+  prevChapter?: { title: string; url: string } | null;
+  nextChapter?: { title: string; url: string } | null;
+}
+
+const { title, description, math = false, bookTitle, bookIndex, chapters, prevChapter, nextChapter } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<Base title={title} description={description} math={math}>
+  <div class="book-wrapper">
+    <nav class="book-sidebar" aria-label="Book navigation">
+      <h4 class="sidebar-title">
+        <a href={bookIndex}>{bookTitle}</a>
+      </h4>
+      <ul class="sidebar-nav">
+        {chapters.map(ch => (
+          <li>
+            <a href={ch.url} class:list={[{ active: currentPath === ch.url || currentPath === ch.url + '/' }]}>
+              {ch.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <div class="book-content">
+      <header>
+        <h1>{title}</h1>
+        {description && <p class="desc">{description}</p>}
+      </header>
+      <article>
+        <slot />
+      </article>
+      {(prevChapter || nextChapter) && (
+        <div class="book-nav-footer">
+          <span>
+            {prevChapter && <a href={prevChapter.url}>&larr; {prevChapter.title}</a>}
+          </span>
+          <span>
+            {nextChapter && <a href={nextChapter.url}>{nextChapter.title} &rarr;</a>}
+          </span>
+        </div>
+      )}
+    </div>
+  </div>
+</Base>
+
+<style>
+  .book-wrapper {
+    display: flex;
+    gap: 0;
+    max-width: 100%;
+  }
+  .book-sidebar {
+    width: 240px;
+    min-width: 240px;
+    position: sticky;
+    top: 57px;
+    height: calc(100vh - 57px);
+    overflow-y: auto;
+    padding: 1.5rem 1rem 1.5rem 0;
+    border-right: 1px solid var(--border);
+  }
+  .sidebar-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-title a { color: var(--text); text-decoration: none; }
+  .sidebar-nav { list-style: none; padding: 0; }
+  .sidebar-nav a {
+    display: block;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    text-decoration: none;
+  }
+  .sidebar-nav a:hover { background: var(--card-bg); color: var(--text); text-decoration: none; }
+  .sidebar-nav a.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 500;
+  }
+  .book-content {
+    flex: 1;
+    min-width: 0;
+    padding: 1.5rem 0 1.5rem 2rem;
+  }
+  .desc { color: var(--text-secondary); margin-bottom: 1.5rem; }
+  .book-nav-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+  @media (max-width: 768px) {
+    .book-wrapper { flex-direction: column; }
+    .book-sidebar {
+      width: 100%;
+      min-width: 100%;
+      position: static;
+      height: auto;
+      overflow-y: visible;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+    }
+    .book-content { padding: 1.5rem 0; }
+  }
+</style>

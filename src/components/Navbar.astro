@@ -1,0 +1,208 @@
+---
+const currentPath = Astro.url.pathname;
+const navItems = [
+  { label: 'about', href: '/' },
+  { label: 'blog', href: '/blog/' },
+  { label: 'publications', href: '/publications/' },
+  { label: 'projects', href: '/projects/' },
+  { label: 'repositories', href: '/repositories/' },
+  { label: 'CV', href: '/cv/' },
+];
+const notesItems = [
+  { label: 'LLM', href: '/llm-book/' },
+  { label: 'Diffusion Models', href: '/diffusion-models/' },
+  { label: 'Reinforcement Learning', href: '/reinforcement-learning/' },
+  { label: 'GPUs', href: '/gpus/' },
+];
+const isNotesActive = notesItems.some(n => currentPath.startsWith(n.href));
+---
+
+<nav class="navbar">
+  <div class="nav-container">
+    <a class="nav-brand" href="/">
+      <span class="brand-bold">Haowu</span> Duan
+    </a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links">
+      {navItems.map(item => (
+        <li>
+          <a href={item.href} class:list={[{ active: currentPath === item.href }]}>
+            {item.label}
+          </a>
+        </li>
+      ))}
+      <li class="dropdown">
+        <button class="dropdown-toggle" class:list={[{ active: isNotesActive }]} aria-expanded="false">
+          Notes <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" fill="none" stroke-width="1.5"/></svg>
+        </button>
+        <ul class="dropdown-menu">
+          {notesItems.map(item => (
+            <li>
+              <a href={item.href} class:list={[{ active: currentPath.startsWith(item.href) }]}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </li>
+      <li>
+        <button id="theme-toggle" aria-label="Toggle dark mode" class="theme-btn">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<style>
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 0;
+  }
+  .nav-container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+  .nav-brand {
+    font-size: 1.1rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .brand-bold { font-weight: 700; }
+  .nav-toggle { display: none; }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nav-links a, .dropdown-toggle {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 4px;
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .nav-links a:hover, .dropdown-toggle:hover,
+  .nav-links a.active, .dropdown-toggle.active {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .dropdown { position: relative; }
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.25rem;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    list-style: none;
+    margin: 0.25rem 0 0;
+  }
+  .dropdown.open .dropdown-menu { display: block; }
+  .dropdown-menu a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+  }
+  .dropdown-menu a:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+  .theme-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+  }
+  .theme-btn:hover { color: var(--accent); }
+  :global([data-theme="dark"]) .icon-sun { display: inline; }
+  :global([data-theme="dark"]) .icon-moon { display: none; }
+  :global(:not([data-theme="dark"])) .icon-sun { display: none; }
+  :global(:not([data-theme="dark"])) .icon-moon { display: inline; }
+
+  @media (max-width: 768px) {
+    .nav-toggle {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.5rem;
+      margin-left: auto;
+    }
+    .nav-toggle span {
+      width: 20px;
+      height: 2px;
+      background: var(--text);
+      transition: 0.2s;
+    }
+    .nav-links {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      padding: 0.5rem 0;
+    }
+    .nav-links.open { display: flex; }
+    .nav-container { flex-wrap: wrap; }
+    .dropdown-menu {
+      position: static;
+      box-shadow: none;
+      border: none;
+      padding-left: 1rem;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.dropdown-toggle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = btn.closest('.dropdown')!;
+      dropdown.classList.toggle('open');
+    });
+  });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+  });
+  document.querySelector('.nav-toggle')?.addEventListener('click', () => {
+    document.querySelector('.nav-links')?.classList.toggle('open');
+  });
+  const toggle = document.getElementById('theme-toggle');
+  toggle?.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  });
+</script>
