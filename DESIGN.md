@@ -182,3 +182,6 @@ to require them. These controls should remain subordinate to the article.
 | 2026-08-18 | Rounds 1–3 implemented | Transferred the accepted editorial system, data-page layouts, book navigation, article contents, and local build-time KaTeX into the production Astro site |
 | 2026-08-18 | Preview and drafts retained | Removed the preview ignore rule; both the design reference and writing drafts can be versioned without publishing draft content |
 | 2026-08-18 | First article published | Preserved `drafts/blog1/` and added a separate production copy of “JIMWLK in the Speed of Light,” including its roofline figure |
+| 2026-08-18 | Preview and production styling unified | Made `src/styles/global.css` the canonical visual source; the preview build now copies it directly so spacing, typography, colors, dark mode, and responsive rules cannot drift |
+| 2026-08-18 | Notes navigation made persistent | Replaced the temporary Notes dropdown with the same quiet secondary navigation row in production and the local preview |
+| 2026-08-18 | Article heading numbering removed | Removed manual numbers from the published JIMWLK section headings because the generated table of contents already supplies structure |

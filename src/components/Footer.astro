@@ -8,27 +8,3 @@ const year = new Date().getFullYear();
     <span>Text-first by design.</span>
   </div>
 </footer>
-
-<style>
-  .site-footer {
-    border-top: 1px solid var(--rule);
-  }
-
-  .site-footer__inner {
-    width: min(calc(100% - 3rem), var(--shell));
-    margin-inline: auto;
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-block: 1.4rem 2rem;
-    color: var(--muted);
-    font-size: 0.78rem;
-  }
-
-  @media (max-width: 760px) {
-    .site-footer__inner {
-      width: min(calc(100% - 2rem), var(--shell));
-      flex-direction: column;
-    }
-  }
-</style>

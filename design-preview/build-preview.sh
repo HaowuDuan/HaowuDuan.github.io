@@ -2,6 +2,7 @@
 set -eu
 
 cd "$(dirname "$0")"
+cp ../src/styles/global.css styles.css
 mkdir -p assets
 cp ../drafts/blog1/assets/roofline-demo.svg assets/roofline-demo.svg
 
@@ -19,4 +20,5 @@ sed '1d' ../drafts/blog1/draft_jimwlk.md | pandoc \
   --output=article.html
 
 cp notes-template.html notes.html
-node render-katex.mjs article.html notes.html
+cp diffusion-notes-template.html diffusion-notes.html
+node render-katex.mjs article.html notes.html diffusion-notes.html

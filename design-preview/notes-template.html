@@ -25,25 +25,48 @@
       </div>
     </header>
 
+    <nav class="notes-subnav" aria-label="Note collections">
+      <div class="notes-subnav__inner">
+        <a href="notes.html" aria-current="page">LLM</a>
+        <a href="diffusion-notes.html">Diffusion Models</a>
+        <span>Reinforcement Learning</span>
+        <span>GPUs</span>
+      </div>
+    </nav>
+
     <main class="page-shell book-layout">
       <aside class="book-sidebar" aria-label="Book navigation">
         <h2>LLM Notes</h2>
         <ol class="chapter-list">
-          <li><a href="notes.html" aria-current="page">1. Introduction</a></li>
-          <li><a href="#representation">2. Representations</a></li>
-          <li><a href="#optimization">3. Optimization</a></li>
-          <li><a href="#scaling">4. Scaling</a></li>
+          <li><a href="notes.html" aria-current="page">Introduction</a></li>
+          <li><a href="#modern-llm-architecture">1. Modern LLM Architecture</a></li>
+          <li>
+            <a href="#llm-training">2. LLM Training</a>
+            <ol class="chapter-sublist">
+              <li><a href="#optimizer">2.1 Optimizer</a></li>
+              <li><a href="#scheduler">2.2 Scheduler</a></li>
+            </ol>
+          </li>
+          <li><a href="#parallelism">3. Parallelism</a></li>
+          <li><a href="#post-training">4. Post-training</a></li>
         </ol>
       </aside>
 
       <div class="note-content">
         <details class="book-mobile-nav">
-          <summary>Chapters · 1. Introduction</summary>
+          <summary>Chapters · Introduction</summary>
           <ol class="chapter-list">
-            <li><a href="notes.html" aria-current="page">1. Introduction</a></li>
-            <li><a href="#representation">2. Representations</a></li>
-            <li><a href="#optimization">3. Optimization</a></li>
-            <li><a href="#scaling">4. Scaling</a></li>
+            <li><a href="notes.html" aria-current="page">Introduction</a></li>
+            <li><a href="#modern-llm-architecture">1. Modern LLM Architecture</a></li>
+            <li>
+              <a href="#llm-training">2. LLM Training</a>
+              <ol class="chapter-sublist">
+                <li><a href="#optimizer">2.1 Optimizer</a></li>
+                <li><a href="#scheduler">2.2 Scheduler</a></li>
+              </ol>
+            </li>
+            <li><a href="#parallelism">3. Parallelism</a></li>
+            <li><a href="#post-training">4. Post-training</a></li>
           </ol>
         </details>
         <header class="article-header">
@@ -54,7 +77,7 @@
         <article class="prose" data-linked-headings>
           <p>This is my attempt to write what I have learned about large language models from a physics perspective. It is ongoing. After I finish the LLM part, there will be a separate set of notes on reinforcement learning.</p>
 
-          <h2 id="representation">Representations and scale</h2>
+          <h2 id="modern-llm-architecture">1. Modern LLM Architecture</h2>
           <p>A useful technical note should make its assumptions visible before compressing them into notation. Equations belong in the same reading rhythm as prose rather than inside a visually separate application panel.</p>
           <p>For a sequence of tokens
             <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>x</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">x_1,\ldots,x_T</annotation></semantics></math>,
@@ -62,19 +85,27 @@
           </p>
           <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>x</mi><mi>T</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><munderover><mo>∏</mo><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow><mi>T</mi></munderover><mi>p</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>t</mi></msub><mo>∣</mo><msub><mi>x</mi><mrow><mo>&lt;</mo><mi>t</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">p(x_1,\ldots,x_T)=\prod_{t=1}^{T}p(x_t\mid x_{&lt;t}).</annotation></semantics></math></p>
 
-          <h2 id="optimization">Optimization</h2>
+          <h2 id="llm-training">2. LLM Training</h2>
           <p>The sidebar stays quiet and the active chapter is indicated with a narrow line, not a filled blue rectangle. The content column keeps the same measure as a blog article so moving between formats does not require learning a new reading environment.</p>
+
+          <h3 id="optimizer">2.1 Optimizer</h3>
           <pre><code>for batch in data:
     loss = model(batch)
     loss.backward()
     optimizer.step()</code></pre>
 
-          <h2 id="scaling">Scaling</h2>
+          <h3 id="scheduler">2.2 Scheduler</h3>
+          <p>This subsection will cover learning-rate schedules and their relationship to optimization dynamics.</p>
+
+          <h2 id="parallelism">3. Parallelism</h2>
           <p>This mock chapter is intentionally short. The full article preview is the stress test for code, tables, wide figures, algorithms, and deeply nested technical structure.</p>
+
+          <h2 id="post-training">4. Post-training</h2>
+          <p>This section will cover the methods used to adapt and align a pretrained language model.</p>
         </article>
         <nav class="chapter-footer" aria-label="Chapter navigation">
           <span class="disabled">← Previous</span>
-          <a href="#representation">Representations →</a>
+          <a href="#modern-llm-architecture">Modern LLM Architecture →</a>
         </nav>
       </div>
     </main>
@@ -82,7 +113,7 @@
     <footer class="site-footer">
       <div class="site-footer__inner">
         <span>© 2026 Haowu Duan</span>
-        <a href="article.html">Open the full technical article</a>
+        <a href="diffusion-notes.html">Diffusion model notes</a>
       </div>
     </footer>
   </body>

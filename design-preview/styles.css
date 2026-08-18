@@ -11,11 +11,34 @@
   --link: #315f8d;
   --link-hover: #193e64;
   --code: #f0eee8;
+  --code-ink: #282723;
+  --inline-code-border: #e2ded5;
+  --quote-ink: #3f3d39;
+  --figure-bg: #fff;
   --shell: 74rem;
   --prose: 74ch;
   --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --reading: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #171714;
+  --paper-raised: #201f1b;
+  --ink: #dedbd4;
+  --ink-strong: #f4f1ea;
+  --muted: #aaa49a;
+  --faint: #817b72;
+  --rule: #3b3933;
+  --rule-strong: #514d44;
+  --link: #8eb6dc;
+  --link-hover: #bdd4e9;
+  --code: #211f1b;
+  --code-ink: #e6e1d7;
+  --inline-code-border: #454139;
+  --quote-ink: #c8c2b7;
+  --figure-bg: #211f1b;
 }
 
 * {
@@ -36,6 +59,19 @@ body {
   line-height: 1.68;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body > main {
+  width: 100%;
+  flex: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 3px;
 }
 
 a {
@@ -49,6 +85,7 @@ a:hover {
 }
 
 .review-bar {
+  display: none;
   background: var(--ink-strong);
   color: #eeeae2;
   font-size: 0.75rem;
@@ -117,6 +154,50 @@ a:hover {
   text-decoration: underline;
   text-decoration-color: var(--rule-strong);
   text-underline-offset: 0.38rem;
+}
+
+.theme-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.theme-button:hover {
+  color: var(--ink-strong);
+}
+
+.notes-subnav {
+  border-bottom: 1px solid var(--rule);
+}
+
+.notes-subnav__inner {
+  display: flex;
+  width: min(calc(100% - 3rem), var(--shell));
+  margin-inline: auto;
+  gap: 0.5rem 1.4rem;
+  padding-block: 0.68rem;
+  overflow-x: auto;
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.notes-subnav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.notes-subnav a:hover,
+.notes-subnav a[aria-current="page"] {
+  color: var(--ink-strong);
+}
+
+.notes-subnav a[aria-current="page"] {
+  font-weight: 650;
 }
 
 .page-shell {
@@ -265,6 +346,10 @@ a:hover {
 
 .editorial-list h3 a:hover {
   color: var(--link);
+}
+
+.editorial-list .planned-entry h3 {
+  color: var(--ink-strong);
 }
 
 .editorial-list p {
@@ -467,6 +552,15 @@ a:hover {
   grid-row: 2;
 }
 
+.article-layout--single {
+  display: block;
+}
+
+.article-layout--single .article-header,
+.article-layout--single .prose {
+  margin-inline: auto;
+}
+
 .article-header {
   padding-bottom: 2.25rem;
   border-bottom: 1px solid var(--rule-strong);
@@ -654,7 +748,7 @@ a:hover {
   margin: 2rem 0;
   padding: 0.25rem 0 0.25rem 1.35rem;
   border-left: 2px solid var(--rule-strong);
-  color: #3f3d39;
+  color: var(--quote-ink);
 }
 
 .prose blockquote p {
@@ -666,7 +760,7 @@ a:hover {
 }
 
 .prose code {
-  border: 1px solid #e2ded5;
+  border: 1px solid var(--inline-code-border);
   border-radius: 0.2rem;
   background: var(--code);
   font-family: var(--mono);
@@ -683,7 +777,7 @@ a:hover {
   border: 1px solid var(--rule);
   border-radius: 0.25rem;
   background: var(--code);
-  color: #282723;
+  color: var(--code-ink);
   font-family: var(--mono);
   font-size: 0.875rem;
   line-height: 1.58;
@@ -739,7 +833,7 @@ a:hover {
   width: 100%;
   height: auto;
   border: 1px solid var(--rule);
-  background: #fff;
+  background: var(--figure-bg);
 }
 
 .prose figcaption,
@@ -818,6 +912,11 @@ a:hover {
   font-size: 1.05rem;
 }
 
+.book-sidebar h2 a {
+  color: var(--ink-strong);
+  text-decoration: none;
+}
+
 .chapter-list {
   margin: 0;
   padding: 0;
@@ -846,6 +945,19 @@ a:hover {
   font-weight: 650;
 }
 
+.chapter-sublist {
+  margin: 0.05rem 0 0.35rem;
+  padding: 0;
+  list-style: none;
+}
+
+.chapter-list .chapter-sublist a {
+  margin-left: 0.45rem;
+  padding-block: 0.28rem;
+  color: var(--faint);
+  font-size: 0.82rem;
+}
+
 .book-mobile-nav {
   display: none;
 }
@@ -872,6 +984,10 @@ a:hover {
   color: var(--faint);
 }
 
+.chapter-footer .chapter-next {
+  text-align: right;
+}
+
 .note-content .article-header {
   margin-left: 0;
 }
@@ -896,7 +1012,8 @@ a:hover {
 @media (max-width: 760px) {
   .site-header__inner,
   .site-footer__inner,
-  .page-shell {
+  .page-shell,
+  .notes-subnav__inner {
     width: min(calc(100% - 2rem), var(--shell));
   }
 

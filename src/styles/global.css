@@ -85,6 +85,7 @@ a:hover {
 }
 
 .review-bar {
+  display: none;
   background: var(--ink-strong);
   color: #eeeae2;
   font-size: 0.75rem;
@@ -153,6 +154,50 @@ a:hover {
   text-decoration: underline;
   text-decoration-color: var(--rule-strong);
   text-underline-offset: 0.38rem;
+}
+
+.theme-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.theme-button:hover {
+  color: var(--ink-strong);
+}
+
+.notes-subnav {
+  border-bottom: 1px solid var(--rule);
+}
+
+.notes-subnav__inner {
+  display: flex;
+  width: min(calc(100% - 3rem), var(--shell));
+  margin-inline: auto;
+  gap: 0.5rem 1.4rem;
+  padding-block: 0.68rem;
+  overflow-x: auto;
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.notes-subnav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.notes-subnav a:hover,
+.notes-subnav a[aria-current="page"] {
+  color: var(--ink-strong);
+}
+
+.notes-subnav a[aria-current="page"] {
+  font-weight: 650;
 }
 
 .page-shell {
@@ -301,6 +346,10 @@ a:hover {
 
 .editorial-list h3 a:hover {
   color: var(--link);
+}
+
+.editorial-list .planned-entry h3 {
+  color: var(--ink-strong);
 }
 
 .editorial-list p {
@@ -896,6 +945,19 @@ a:hover {
   font-weight: 650;
 }
 
+.chapter-sublist {
+  margin: 0.05rem 0 0.35rem;
+  padding: 0;
+  list-style: none;
+}
+
+.chapter-list .chapter-sublist a {
+  margin-left: 0.45rem;
+  padding-block: 0.28rem;
+  color: var(--faint);
+  font-size: 0.82rem;
+}
+
 .book-mobile-nav {
   display: none;
 }
@@ -950,7 +1012,8 @@ a:hover {
 @media (max-width: 760px) {
   .site-header__inner,
   .site-footer__inner,
-  .page-shell {
+  .page-shell,
+  .notes-subnav__inner {
     width: min(calc(100% - 2rem), var(--shell));
   }
 

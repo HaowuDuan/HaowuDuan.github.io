@@ -12,7 +12,7 @@ pinned: true
 
 In this note, I detail my first experience with CUDA optimization. I did not expect to enjoy the process as much as I did: each profiling result exposed a concrete problem, and each fix produced a performance gain that I could immediately see. For readers who are not familiar with the underlying equation, the code performs Langevin evolution of a field of $3 \times 3$ matrices on a 2D lattice, rather than evolving a single vector. As you might guess, this involves a lot of linear algebra. I begin with a direct NumPy-to-CuPy port, simply to get the code running on a GPU and establish a baseline. From there, I use profiling measurements to identify the most time-consuming parts of the evolution and optimize them one by one. At the end of the post, I summarize the mental model I developed for thinking about GPU optimization.
 
-## 1. The Algorithm
+## The Algorithm
 
 We simulate JIMWLK evolution — the renormalization group equation that governs how gluon fields inside a proton change with energy. The degrees of freedom are Wilson lines: at each site of a 2D $N \times N$ lattice, we store a $3 \times 3$ complex unitary matrix $V(\mathbf{x}) \in SU(3)$. The computation has three phases.
 
@@ -148,7 +148,7 @@ and the Weizsäcker-Williams gluon TMDs are extracted from the gauge field $A_i^
 
 **From the computational side**, all of this reduces to: batched $3 \times 3$ matrix multiplies, 2D FFTs, element-wise transcendentals (exp, cos, arccos), and reductions. These are the same operations that dominate GPU time in transformer training, at a different scale.
 
-## 2. The Naive GPU Port
+## The Naive GPU Port
 
 The first step is mechanical: replace NumPy with CuPy. Every array operation — noise generation, FFT, matrix multiply, einsum — becomes a CuPy call, which dispatches to cuFFT, cuBLAS, or elementwise CUDA kernels under the hood. No custom kernels, no clever tricks.
 
@@ -207,7 +207,7 @@ Every step vectorizes over all $N^2$ sites. In CuPy this is roughly 40 lines of 
 On an RTX 3090 at $N = 1024$ with 50 layers, the initial condition takes 9.4 s and each evolution step 1.47 s.
 
 
-## 3. My First Profiling Pass
+## My First Profiling Pass
 
 The naive CuPy port was correct but slow: at $N=1024$, one 50-layer initial condition took 9.4 seconds and one evolution step took 1.47 seconds. Before changing the code, I profiled where the time went and why.
 
@@ -345,7 +345,7 @@ To classify a kernel with the roofline model, obtain $I=W/D$ from operation and 
 
 The two percentages provide only a qualitative check. High DRAM throughput with much lower SM throughput is consistent with a memory-bound kernel; high throughput in the relevant compute pipeline with low DRAM throughput is consistent with a compute-bound kernel. They are not a substitute for arithmetic intensity.
 
-## 4. Optimization
+## Optimization
 
 The profile identified the matrix exponential and tiny matrix products as the main optimization targets.
 
@@ -536,7 +536,7 @@ For the right side, the noise must be rotated by the current $V$ (state-dependen
 
 Not everything benefits from custom kernels. cuFFT already runs at 76–93% of peak DRAM throughput — it is hitting its ceiling, and there is nothing to gain by reimplementing it. Path ordering ($V_1 \cdot V_2 \cdots V_{50}$ per site) is inherently serial across layers; we fused it into one kernel where each thread does the sequential multiply in registers, but no parallelism exists to exploit. The left-side k-space convolution has an unfavorable data layout (8 fields × batch × 2 polarizations × $N$ × $N/2+1$) — a fused kernel would require a transpose that costs more than it saves.
 
-## 5. After Optimization
+## After Optimization
 
 We profile the optimized code with the same Nsight Compute setup. Every kernel is now either a custom RawKernel or a cuFFT library call:
 
@@ -554,7 +554,7 @@ We profile the optimized code with the same Nsight Compute setup. Every kernel i
 
 Total per evolution step: ~8.6 ms, down from 1466 ms — a 170× speedup. Total kernel launches per step: 13, down from 499.
 
-## 6. Conclusion
+## Conclusion
 
 | | Naive CuPy | Optimized CUDA |
 |-|-----------|----------------|
