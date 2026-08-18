@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A draft article on CUDA optimization of JIMWLK evolution">
+    <title>JIMWLK in the speed of light — Design Preview</title>
+    <link rel="stylesheet" href="vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="preview.js"></script>
+  </head>
+  <body>
+    <div class="review-bar">Local design review · full draft article · not published</div>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">about</a>
+          <a href="blog.html" aria-current="page">blog</a>
+          <a href="publications.html">publications</a>
+          <a href="projects.html">projects</a>
+          <a href="repositories.html">repositories</a>
+          <a href="cv.html">CV</a>
+          <a href="notes.html">notes</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page-shell article-shell article-layout">
+      <header class="article-header">
+        <p class="eyebrow">Draft · GPU computing and high-energy QCD</p>
+        <h1 class="article-title">JIMWLK in the speed of light</h1>
+        <p class="article-deck">Profiling a matrix-valued lattice simulation, replacing fragmented CuPy operations with fused CUDA kernels, and learning how to reason from hardware measurements.</p>
+      </header>
+      <details class="article-toc" open data-responsive-details>
+        <summary class="article-toc__title">Contents</summary>
+$toc$
+      </details>
+      <article class="prose" data-linked-headings>
+$body$
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>Draft article · local preview only</span>
+        <a href="index.html">Back to the home-page preview</a>
+      </div>
+    </footer>
+  </body>
+</html>

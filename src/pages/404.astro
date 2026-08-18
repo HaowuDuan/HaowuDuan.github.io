@@ -3,6 +3,11 @@ import Base from '../layouts/Base.astro';
 ---
 
 <Base title="Not Found">
-  <h1>404</h1>
-  <p>Page not found. <a href="/">Go home</a>.</p>
+  <div class="page-shell data-page">
+    <header class="page-header">
+      <p class="eyebrow">Not found</p>
+      <h1 class="page-title">404</h1>
+      <p class="page-description">This page does not exist. <a href="/">Return home</a>.</p>
+    </header>
+  </div>
 </Base>

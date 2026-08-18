@@ -2,65 +2,84 @@
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 
-const allTags = ['optimization', 'physics-of-ml', 'reinforcement-learning'];
 let posts: any[] = [];
 try {
-  posts = (await getCollection('blog'))
-    .sort((a: any, b: any) => {
-      if (a.data.pinned !== b.data.pinned) return a.data.pinned ? -1 : 1;
-      return b.data.date.getTime() - a.data.date.getTime();
-    });
+  posts = (await getCollection('blog')).sort((a: any, b: any) => {
+    if (a.data.pinned !== b.data.pinned) return a.data.pinned ? -1 : 1;
+    return b.data.date.getTime() - a.data.date.getTime();
+  });
 } catch {}
+
+const allTags = [...new Set(posts.flatMap(post => post.data.tags as string[]))].sort();
 ---
 
-<Base title="Blog">
-  <h1>Blog</h1>
-  <div class="tags" id="tag-filters">
-    <button class="tag-chip active" data-tag="all">all</button>
-    {allTags.map(tag => (
-      <button class="tag-chip" data-tag={tag}>{tag}</button>
-    ))}
-  </div>
-  {posts.length === 0 ? (
-    <p style="color: var(--text-secondary); margin-top: 2rem;">No posts yet.</p>
-  ) : (
-    <ul class="post-list" id="post-list">
-      {posts.map((post: any) => (
-        <li data-tags={post.data.tags.join(',')}>
-          <span class="date">{post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-          <div>
-            <a href={`/blog/${post.id}/`}>{post.data.title}</a>
-            {post.data.pinned && <span class="pin">📌</span>}
-            <div class="post-tags">
-              {post.data.tags.map((t: string) => <span class="tag-label">{t}</span>)}
+<Base title="Blog" description="Technical writing on GPU computing, machine learning, and theoretical physics.">
+  <div class="page-shell data-page">
+    <header class="page-header">
+      <p class="eyebrow">Writing</p>
+      <h1 class="page-title">Blog</h1>
+      <p class="page-description">Technical writing on GPU computing, machine learning, and theoretical physics.</p>
+    </header>
+
+    {allTags.length > 0 && (
+      <nav class="topic-index" id="tag-filters" aria-label="Filter writing by topic">
+        <button type="button" data-tag="all" aria-pressed="true">All writing</button>
+        {allTags.map(tag => <button type="button" data-tag={tag} aria-pressed="false">{tag}</button>)}
+      </nav>
+    )}
+
+    {posts.length === 0 ? (
+      <p class="empty-state">No posts yet.</p>
+    ) : (
+      <ol class="editorial-list" id="post-list">
+        {posts.map((post: any) => (
+          <li data-tags={post.data.tags.join(',')}>
+            <time class="date" datetime={post.data.date.toISOString()}>
+              {post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+            </time>
+            <div>
+              <h3><a href={`/blog/${post.id}/`}>{post.data.title}</a></h3>
+              {post.data.description && <p>{post.data.description}</p>}
+              {post.data.tags.length > 0 && <div class="tags">{post.data.tags.join(' · ')}</div>}
+              {post.data.pinned && <div class="tags">Pinned</div>}
             </div>
-          </div>
-        </li>
-      ))}
-    </ul>
-  )}
+          </li>
+        ))}
+      </ol>
+    )}
+  </div>
 </Base>
 
 <style>
-  .tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-  .post-list { list-style: none; padding: 0; }
-  .post-list li { display: flex; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
-  .date { color: var(--text-secondary); font-size: 0.9rem; min-width: 120px; }
-  .pin { margin-left: 0.5rem; }
-  .post-tags { display: flex; gap: 0.4rem; margin-top: 0.2rem; }
-  .tag-label { font-size: 0.75rem; color: var(--text-secondary); }
+  .topic-index button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .topic-index button:hover,
+  .topic-index button[aria-pressed='true'] {
+    color: var(--ink-strong);
+    text-decoration: underline;
+    text-underline-offset: 0.25rem;
+  }
 </style>
 
 <script>
-  document.querySelectorAll('#tag-filters .tag-chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#tag-filters .tag-chip').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const tag = (btn as HTMLElement).dataset.tag;
-      document.querySelectorAll('#post-list li').forEach(li => {
-        const tags = (li as HTMLElement).dataset.tags || '';
-        (li as HTMLElement).style.display = (tag === 'all' || tags.includes(tag!)) ? '' : 'none';
-      });
+  const filters = [...document.querySelectorAll<HTMLButtonElement>('#tag-filters button')];
+  const entries = [...document.querySelectorAll<HTMLElement>('#post-list > li')];
+
+  for (const filter of filters) {
+    filter.addEventListener('click', () => {
+      const selectedTag = filter.dataset.tag;
+      for (const button of filters) button.setAttribute('aria-pressed', String(button === filter));
+      for (const entry of entries) {
+        const tags = (entry.dataset.tags || '').split(',');
+        entry.hidden = selectedTag !== 'all' && !tags.includes(selectedTag || '');
+      }
     });
-  });
+  }
 </script>

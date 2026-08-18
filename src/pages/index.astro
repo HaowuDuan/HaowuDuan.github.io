@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import { formatAuthors, getPublications } from '../lib/bibtex';
 
 let posts: any[] = [];
 try {
@@ -8,50 +9,97 @@ try {
     .sort((a: any, b: any) => b.data.date.getTime() - a.data.date.getTime())
     .slice(0, 3);
 } catch {}
+
+const selectedPublications = getPublications().filter(publication => publication.selected).slice(0, 3);
 ---
 
-<Base title="Haowu Duan">
-  <div class="profile">
-    <h1><span style="font-weight:700">Haowu</span> Duan</h1>
-    <p class="subtitle">Theoretical Physicist · ML Researcher</p>
-  </div>
+<Base title="Haowu Duan" description="Theoretical physicist and machine-learning researcher working on high-energy QCD and technical computing.">
+  <div class="page-shell home">
+    <section class="identity" aria-labelledby="name">
+      <p class="eyebrow">Theoretical physics · Machine learning</p>
+      <h1 id="name">Haowu Duan</h1>
+      <p class="role">Theoretical physicist and machine-learning researcher.</p>
+      <div class="bio">
+        <p>I am a theoretical high-energy physicist with a PhD from NC State and postdoctoral experience at UConn. My research background is in QCD at small Bjorken-x—the Color Glass Condensate, JIMWLK/BK evolution, and dipole phenomenology.</p>
+        <p>I am interested in understanding deep-learning systems through the lens of statistical mechanics and field theory, and in applying machine learning to problems in non-perturbative QCD.</p>
+      </div>
+      <div class="contact-links" aria-label="Contact and profiles">
+        <a href="mailto:hwdcgc@gmail.com">Email</a>
+        <a href="https://github.com/HaowuDuan" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://inspirehep.net/authors/2036679" target="_blank" rel="noopener">InspireHEP</a>
+        <a href="https://scholar.google.com/citations?user=qc6CJjYAAAAJ" target="_blank" rel="noopener">Google Scholar</a>
+      </div>
+    </section>
 
-  <div class="bio">
-    <p>I am a theoretical high-energy physicist with a PhD from NC State and postdoctoral experience at UConn. My research background is in QCD at small Bjorken-x — the Color Glass Condensate, JIMWLK/BK evolution, and dipole phenomenology.</p>
-    <p>I am interested in understanding deep learning systems through the lens of statistical mechanics and field theory, and in applying ML to problems in non-perturbative QCD. I am looking for research engineering and reinforcement learning positions at frontier AI labs.</p>
-  </div>
+    {posts.length > 0 && (
+      <section class="home-section" aria-labelledby="writing-heading">
+        <div class="home-section__heading">
+          <h2 id="writing-heading">Recent writing</h2>
+          <a class="quiet-link" href="/blog/">All writing</a>
+        </div>
+        <ol class="editorial-list">
+          {posts.map((post: any) => (
+            <li>
+              <time class="date" datetime={post.data.date.toISOString()}>
+                {post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+              </time>
+              <div>
+                <h3><a href={`/blog/${post.id}/`}>{post.data.title}</a></h3>
+                {post.data.description && <p>{post.data.description}</p>}
+                {post.data.tags.length > 0 && <div class="tags">{post.data.tags.join(' · ')}</div>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
 
-  <div class="contact">
-    <p>段昊武 (Haowu Duan) · hwdcgc [at] gmail.com</p>
-    <div class="links">
-      <a href="https://github.com/HaowuDuan" target="_blank" rel="noopener">GitHub</a>
-      <a href="https://inspirehep.net/authors/2036679" target="_blank" rel="noopener">InspireHEP</a>
-      <a href="https://scholar.google.com/citations?user=qc6CJjYAAAAJ" target="_blank" rel="noopener">Google Scholar</a>
-    </div>
-  </div>
-
-  {posts.length > 0 && (
-    <section>
-      <h2><a href="/blog/">latest posts</a></h2>
-      <ul class="post-list">
-        {posts.map((post: any) => (
+    <section class="home-section" aria-labelledby="research-heading">
+      <div class="home-section__heading">
+        <h2 id="research-heading">Selected research</h2>
+        <a class="quiet-link" href="/publications/">All publications</a>
+      </div>
+      <ol class="editorial-list">
+        {selectedPublications.map(publication => (
           <li>
-            <span class="date">{post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-            <a href={`/blog/${post.id}/`}>{post.data.title}</a>
+            <span class="date">{publication.year} · {publication.abbr || publication.journal}</span>
+            <div>
+              <h3>
+                {publication.doi ? (
+                  <a href={`https://doi.org/${publication.doi}`} target="_blank" rel="noopener">{publication.title}</a>
+                ) : publication.title}
+              </h3>
+              <p>{formatAuthors(publication.author)}</p>
+            </div>
           </li>
         ))}
-      </ul>
+      </ol>
     </section>
-  )}
-</Base>
 
-<style>
-  .profile { margin-bottom: 1.5rem; }
-  .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
-  .bio { margin-bottom: 2rem; max-width: 700px; }
-  .contact { margin-bottom: 2rem; }
-  .links { display: flex; gap: 1rem; margin-top: 0.5rem; }
-  .post-list { list-style: none; padding: 0; }
-  .post-list li { display: flex; gap: 1rem; padding: 0.4rem 0; }
-  .date { color: var(--text-secondary); font-size: 0.9rem; min-width: 120px; }
-</style>
+    <section class="home-section" aria-labelledby="projects-heading">
+      <div class="home-section__heading"><h2 id="projects-heading">Projects</h2></div>
+      <ol class="editorial-list">
+        <li>
+          <span class="date">In progress</span>
+          <div>
+            <h3>Technical notes</h3>
+            <p>Long-form notes on large language models, diffusion models, reinforcement learning, and GPU programming.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="home-section" aria-labelledby="position-heading">
+      <div class="home-section__heading"><h2 id="position-heading">Current position</h2></div>
+      <ol class="editorial-list">
+        <li>
+          <span class="date">2023–present</span>
+          <div>
+            <h3>Postdoctoral Researcher</h3>
+            <p>Department of Physics, University of Connecticut · Storrs, Connecticut.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+  </div>
+</Base>

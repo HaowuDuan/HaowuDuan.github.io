@@ -1,6 +1,7 @@
 ---
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import 'katex/dist/katex.min.css';
 import '../styles/global.css';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 
 const { title, description = '', math = false } = Astro.props;
 const fullTitle = title === 'Haowu Duan' ? title : `${title} | Haowu Duan`;
+void math;
 ---
 
 <!DOCTYPE html>
@@ -21,12 +23,10 @@ const fullTitle = title === 'Haowu Duan' ? title : `${title} | Haowu Duan`;
   <meta name="generator" content={Astro.generator} />
   <title>{fullTitle}</title>
   {description && <meta name="description" content={description} />}
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚛️</text></svg>" />
-  {math && (
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj3dxCkAmYbkMvFMFCMBf3EvPO0Am1MZBI17ATMnFLMd0QJGX+O1BdTpe" crossorigin="anonymous" />
-  )}
+  <link rel="icon" href="/favicon.svg" />
   <script is:inline>
-    const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const savedTheme = localStorage.getItem('theme');
+    const theme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', theme);
   </script>
 </head>
@@ -36,5 +36,59 @@ const fullTitle = title === 'Haowu Duan' ? title : `${title} | Haowu Duan`;
     <slot />
   </main>
   <Footer />
+  <script>
+    const article = document.querySelector('[data-linked-headings]');
+    const headings = article
+      ? [...article.querySelectorAll<HTMLElement>('h2[id], h3[id]')]
+          .filter(heading => !heading.closest('.footnotes, [role="doc-endnotes"]'))
+      : [];
+
+    for (const heading of headings) {
+      if (heading.querySelector('.heading-anchor')) continue;
+      const anchor = document.createElement('a');
+      anchor.className = 'heading-anchor';
+      anchor.href = `#${heading.id}`;
+      anchor.setAttribute('aria-label', `Link to ${heading.textContent?.trim() || 'this section'}`);
+      anchor.textContent = '#';
+      heading.append(anchor);
+    }
+
+    const responsiveContents = document.querySelector<HTMLDetailsElement>('[data-responsive-details]');
+    const compactContents = window.matchMedia('(max-width: 1020px)');
+    const syncContentsMode = () => {
+      if (responsiveContents) responsiveContents.open = !compactContents.matches;
+    };
+
+    syncContentsMode();
+    compactContents.addEventListener('change', syncContentsMode);
+
+    const tocLinks = [...document.querySelectorAll<HTMLAnchorElement>('[data-article-toc] a[href^="#"]')];
+    let scrollFrame: number | null = null;
+
+    const updateCurrentSection = () => {
+      scrollFrame = null;
+      if (!headings.length || !tocLinks.length) return;
+
+      let current = headings[0];
+      const threshold = window.innerHeight * 0.24;
+      for (const heading of headings) {
+        if (heading.getBoundingClientRect().top <= threshold) current = heading;
+        else break;
+      }
+
+      for (const link of tocLinks) {
+        if (link.hash === `#${current.id}`) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      }
+    };
+
+    const scheduleCurrentSection = () => {
+      if (scrollFrame === null) scrollFrame = requestAnimationFrame(updateCurrentSection);
+    };
+
+    updateCurrentSection();
+    addEventListener('scroll', scheduleCurrentSection, { passive: true });
+    addEventListener('resize', scheduleCurrentSection);
+  </script>
 </body>
 </html>

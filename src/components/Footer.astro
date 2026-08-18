@@ -2,23 +2,33 @@
 const year = new Date().getFullYear();
 ---
 
-<footer class="footer">
-  <div class="footer-container">
-    &copy; {year} Haowu Duan. Built with <a href="https://astro.build" target="_blank" rel="noopener">Astro</a>.
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <span>&copy; {year} Haowu Duan</span>
+    <span>Text-first by design.</span>
   </div>
 </footer>
 
 <style>
-  .footer {
-    border-top: 1px solid var(--border);
-    padding: 1rem 0;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+  .site-footer {
+    border-top: 1px solid var(--rule);
   }
-  .footer-container {
-    max-width: var(--max-width);
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    text-align: center;
+
+  .site-footer__inner {
+    width: min(calc(100% - 3rem), var(--shell));
+    margin-inline: auto;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1.4rem 2rem;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  @media (max-width: 760px) {
+    .site-footer__inner {
+      width: min(calc(100% - 2rem), var(--shell));
+      flex-direction: column;
+    }
   }
 </style>

@@ -51,3 +51,14 @@ export function getPublications(): Publication[] {
   const bibPath = path.join(process.cwd(), 'src/data/papers.bib');
   return parseBibTeX(bibPath);
 }
+
+export function formatAuthors(authors: string): string {
+  const names = authors.split(/\s+and\s+/).map(name => {
+    const [family, given] = name.split(',').map(part => part.trim());
+    return given ? `${given} ${family}` : family;
+  });
+
+  if (names.length < 2) return names[0] || '';
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names.at(-1)}`;
+}

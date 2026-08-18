@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Blog — Haowu Duan — Design Preview</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="review-bar">Local design review · Round 2 blog archive · not part of the proposed site</div>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">about</a>
+          <a href="blog.html" aria-current="page">blog</a>
+          <a href="publications.html">publications</a>
+          <a href="projects.html">projects</a>
+          <a href="repositories.html">repositories</a>
+          <a href="cv.html">CV</a>
+          <a href="notes.html">notes</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page-shell data-page">
+      <header class="page-header">
+        <p class="eyebrow">Writing</p>
+        <h1 class="page-title">Blog</h1>
+        <p class="page-description">Technical writing on GPU computing, machine learning, and theoretical physics.</p>
+      </header>
+
+      <nav class="topic-index" aria-label="Blog topics">
+        <a href="blog.html" aria-current="true">All writing</a>
+        <a href="#gpu">GPU computing</a>
+        <a href="#physics">Physics</a>
+        <a href="#ml">Machine learning</a>
+        <a href="#rl">Reinforcement learning</a>
+      </nav>
+
+      <ol class="editorial-list">
+        <li>
+          <time class="date" datetime="2026-08">Draft · 2026</time>
+          <div>
+            <h3><a href="article.html">JIMWLK in the speed of light</a></h3>
+            <p>A first experience with CUDA optimization: profiling a matrix-valued lattice simulation, replacing fragmented CuPy operations with fused kernels, and developing a practical GPU performance model.</p>
+            <div class="tags" id="gpu">GPU computing · CUDA · high-energy QCD</div>
+          </div>
+        </li>
+      </ol>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>© 2026 Haowu Duan</span>
+        <a href="article.html">Open the article preview</a>
+      </div>
+    </footer>
+  </body>
+</html>

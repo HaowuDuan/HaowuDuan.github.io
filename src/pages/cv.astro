@@ -3,108 +3,110 @@ import Base from '../layouts/Base.astro';
 import { getCV } from '../lib/cv';
 
 const cv = getCV();
+
+function formatDate(value: string | number): string {
+  const text = String(value);
+  const match = text.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return text;
+  const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(2000, Number(match[2]) - 1, 1));
+  return `${month} ${match[1]}`;
+}
+
+function formatRange(start: string | number, end: string | number): string {
+  const formattedStart = formatDate(start);
+  const formattedEnd = formatDate(end);
+  return formattedStart === formattedEnd ? formattedStart : `${formattedStart}–${formattedEnd}`;
+}
 ---
 
-<Base title="CV">
-  <h1>CV</h1>
+<Base title="CV" description={cv.summary}>
+  <div class="page-shell data-page">
+    <header class="page-header">
+      <p class="eyebrow">Curriculum vitae</p>
+      <h1 class="page-title">{cv.name}</h1>
+      {cv.summary && <p class="page-description">{cv.summary}</p>}
+    </header>
 
-  {cv.summary && (
-    <section class="card">
-      <h2>Summary</h2>
-      <p>{cv.summary}</p>
-    </section>
-  )}
+    {cv.sections?.Experience && (
+      <section class="cv-section" aria-labelledby="experience-heading">
+        <h2 id="experience-heading">Experience</h2>
+        <ol class="cv-list">
+          {cv.sections.Experience.map((entry: any) => (
+            <li class="cv-entry">
+              <div class="cv-date">{formatRange(entry.start_date, entry.end_date)}</div>
+              <div>
+                <h3>{entry.position}</h3>
+                <p>{entry.company}</p>
+                {(entry.summary || entry.location) && <p class="cv-detail">{[entry.summary, entry.location].filter(Boolean).join(' · ')}</p>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
 
-  {cv.sections?.Education && (
-    <section class="card">
-      <h2>Education</h2>
-      {cv.sections.Education.map((e: any) => (
-        <div class="entry">
-          <div class="entry-date">{e.start_date} – {e.end_date}</div>
-          <div class="entry-body">
-            <strong>{e.studyType} in {e.area}</strong>
-            <div>{e.institution}</div>
-            {e.location && <div class="location">{e.location}</div>}
-          </div>
-        </div>
-      ))}
-    </section>
-  )}
+    {cv.sections?.Education && (
+      <section class="cv-section" aria-labelledby="education-heading">
+        <h2 id="education-heading">Education</h2>
+        <ol class="cv-list">
+          {cv.sections.Education.map((entry: any) => (
+            <li class="cv-entry">
+              <div class="cv-date">{formatRange(entry.start_date, entry.end_date)}</div>
+              <div>
+                <h3>{entry.studyType} in {entry.area}</h3>
+                <p>{entry.institution}</p>
+                {entry.location && <p class="cv-detail">{entry.location}</p>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
 
-  {cv.sections?.Experience && (
-    <section class="card">
-      <h2>Experience</h2>
-      {cv.sections.Experience.map((e: any) => (
-        <div class="entry">
-          <div class="entry-date">{e.start_date} – {e.end_date}</div>
-          <div class="entry-body">
-            <strong>{e.position}</strong>
-            <div>{e.company}</div>
-            {e.location && <div class="location">{e.location}</div>}
-            {e.summary && <div class="summary">{e.summary}</div>}
-          </div>
-        </div>
-      ))}
-    </section>
-  )}
+    {cv.sections?.Interests && (
+      <section class="cv-section" aria-labelledby="interests-heading">
+        <h2 id="interests-heading">Research interests</h2>
+        <ol class="cv-list">
+          {cv.sections.Interests.map((entry: any) => (
+            <li class="cv-entry">
+              <div class="cv-date">Current</div>
+              <div><h3>{entry.name}</h3><p>{entry.keywords}</p></div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
 
-  {cv.sections?.Interests && (
-    <section class="card">
-      <h2>Research Interests</h2>
-      {cv.sections.Interests.map((i: any) => (
-        <p>{i.keywords}</p>
-      ))}
-    </section>
-  )}
+    {cv.sections?.['Talks and Conferences'] && (
+      <section class="cv-section" aria-labelledby="talks-heading">
+        <h2 id="talks-heading">Talks and conferences</h2>
+        <ol class="cv-list">
+          {cv.sections['Talks and Conferences'].map((entry: any) => (
+            <li class="cv-entry">
+              <div class="cv-date">{formatRange(entry.start_date, entry.end_date)}</div>
+              <div>
+                <h3>{entry.position}</h3>
+                <p>{entry.company}</p>
+                {(entry.summary || entry.location) && <p class="cv-detail">{[entry.summary, entry.location].filter(Boolean).join(' · ')}</p>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
 
-  {cv.sections?.['Talks and Conferences'] && (
-    <section class="card">
-      <h2>Talks and Conferences</h2>
-      {cv.sections['Talks and Conferences'].map((t: any) => {
-        const startYear = String(t.start_date).split('-')[0];
-        const endYear = String(t.end_date).split('-')[0];
-        const date = startYear === endYear ? startYear : `${startYear} – ${endYear}`;
-        return (
-          <div class="entry">
-            <div class="entry-date">{date}</div>
-            <div class="entry-body">
-              <strong>{t.position}</strong>
-              <div>{t.company}</div>
-              {t.location && <div class="location">{t.location}</div>}
-              {t.summary && <div class="summary">{t.summary}</div>}
-            </div>
-          </div>
-        );
-      })}
-    </section>
-  )}
-
-  {cv.sections?.Skills && (
-    <section class="card">
-      <h2>Skills</h2>
-      {cv.sections.Skills.map((s: any) => (
-        <p><strong>{s.name}:</strong> {s.keywords}</p>
-      ))}
-    </section>
-  )}
+    {cv.sections?.Skills && (
+      <section class="cv-section" aria-labelledby="skills-heading">
+        <h2 id="skills-heading">Skills</h2>
+        <ol class="cv-list">
+          {cv.sections.Skills.map((entry: any) => (
+            <li class="cv-entry">
+              <div class="cv-date">{entry.name}</div>
+              <div><h3>{entry.keywords}</h3></div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+  </div>
 </Base>
-
-<style>
-  .card { margin-bottom: 1.5rem; }
-  .card h2 { margin-top: 0; }
-  .entry {
-    display: flex;
-    gap: 1.5rem;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .entry:last-child { border-bottom: none; }
-  .entry-date {
-    min-width: 100px;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-  }
-  .location { font-size: 0.85rem; color: var(--text-secondary); }
-  .summary { font-size: 0.9rem; font-style: italic; color: var(--text-secondary); margin-top: 0.25rem; }
-</style>
