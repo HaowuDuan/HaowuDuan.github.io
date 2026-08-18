@@ -85,12 +85,13 @@ the real article rather than in isolation.
 
 ## Content handling
 
-- `src/content/blog/hello-world.md` is a placeholder and will be removed.
-- `drafts/blog1/draft_jimwlk.md` remains a draft and is not copied into the
-  production Astro collection.
+- The `hello-world` placeholder has been removed.
+- `drafts/blog1/draft_jimwlk.md` remains the preserved source draft.
+- A separate publication copy lives at
+  `src/content/blog/jimwlk-in-the-speed-of-light.md`; publishing or editing it
+  does not remove the draft copy.
 - The tracked preview renders the draft so that design decisions can be tested
   against realistic technical content.
-- Publication requires a separate explicit approval.
 
 ## Round 2: content-heavy pages
 
@@ -134,8 +135,9 @@ the KaTeX fonts locally. Long blog posts receive a responsive contents rail,
 linked headings, technical-content overflow handling, and print styles. Book
 notes use the accepted chapter rail and previous/next navigation.
 
-`design-preview/` and `drafts/` are both repository content. The JIMWLK draft
-remains outside `src/content/blog`, so tracking the draft does not publish it.
+`design-preview/` and `drafts/` are both repository content. The JIMWLK source
+draft remains in `drafts/blog1/`, while its separately maintained publication
+copy is part of the production blog collection.
 
 ## Round 3: technical reading and navigation
 
@@ -179,3 +181,4 @@ to require them. These controls should remain subordinate to the article.
 | 2026-08-18 | KaTeX display regression fixed | Removed a conflicting full-bleed centering rule that collapsed the visible display-equation container to zero width |
 | 2026-08-18 | Rounds 1–3 implemented | Transferred the accepted editorial system, data-page layouts, book navigation, article contents, and local build-time KaTeX into the production Astro site |
 | 2026-08-18 | Preview and drafts retained | Removed the preview ignore rule; both the design reference and writing drafts can be versioned without publishing draft content |
+| 2026-08-18 | First article published | Preserved `drafts/blog1/` and added a separate production copy of “JIMWLK in the Speed of Light,” including its roofline figure |
