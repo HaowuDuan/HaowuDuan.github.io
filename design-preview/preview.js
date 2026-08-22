@@ -44,7 +44,7 @@ for (const heading of headings) {
   heading.append(anchor);
 }
 
-const tocLinks = [...document.querySelectorAll('.article-toc a[href^="#"]')];
+const tocLinks = [...document.querySelectorAll('[data-article-toc] a[href^="#"]')];
 let scrollFrame = null;
 
 function updateCurrentSection() {

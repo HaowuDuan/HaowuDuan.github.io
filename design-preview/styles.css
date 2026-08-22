@@ -832,6 +832,7 @@ a:hover {
   display: block;
   width: 100%;
   height: auto;
+  margin-inline: auto;
   border: 1px solid var(--rule);
   background: var(--figure-bg);
 }
@@ -852,6 +853,36 @@ a:hover {
   display: none;
 }
 
+.prose .mdframed {
+  margin: 2rem 0;
+  padding: 1.1rem 1.25rem;
+  border-left: 2px solid var(--rule-strong);
+  background: var(--paper-raised);
+}
+
+.prose .mdframed > :first-child {
+  margin-top: 0;
+}
+
+.prose .mdframed > :last-child {
+  margin-bottom: 0;
+}
+
+.prose .mdframed figure {
+  width: 100%;
+  margin: 1.75rem 0;
+  transform: none;
+}
+
+.prose .distribution-paths-figure img {
+  padding: clamp(0.5rem, 2vw, 1.25rem);
+  background: var(--figure-bg);
+}
+
+[data-theme="dark"] .prose .distribution-paths-figure img {
+  filter: invert(0.88) hue-rotate(180deg);
+}
+
 /* KaTeX is rendered during the preview build, so equations arrive with the
    page in their final TeX layout and never flash from source to output. */
 .prose .katex {
@@ -870,6 +901,57 @@ a:hover {
 .prose .katex-display > .katex {
   width: max-content;
   min-width: 100%;
+}
+
+.prose .equation-block {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.8rem;
+  align-items: center;
+  scroll-margin-top: 1.5rem;
+}
+
+.prose .equation-block > .katex-display {
+  min-width: 0;
+}
+
+.prose .equation-number {
+  color: var(--muted);
+  font-family: var(--ui);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prose .equation-reference,
+.prose .citation {
+  font-family: var(--ui);
+  font-size: 0.84em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.prose .citation a {
+  text-decoration: none;
+}
+
+.prose .references {
+  margin-top: 4rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule-strong);
+}
+
+.prose .references ol {
+  padding-left: 1.4rem;
+  color: var(--muted);
+  font-family: var(--ui);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.prose .references li {
+  margin-bottom: 0.8rem;
+  padding-left: 0.25rem;
+  scroll-margin-top: 1.5rem;
 }
 
 .prose .footnotes,
@@ -915,6 +997,43 @@ a:hover {
 .book-sidebar h2 a {
   color: var(--ink-strong);
   text-decoration: none;
+}
+
+.note-toc,
+.note-toc ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note-toc li {
+  margin: 0;
+}
+
+.note-toc a {
+  display: block;
+  margin-left: -0.65rem;
+  padding: 0.38rem 0 0.38rem 0.65rem;
+  color: var(--muted);
+  line-height: 1.42;
+  text-decoration: none;
+}
+
+.note-toc a:hover,
+.note-toc a[aria-current="location"] {
+  color: var(--ink-strong);
+}
+
+.note-toc a[aria-current="location"] {
+  border-left: 2px solid var(--link);
+  font-weight: 650;
+}
+
+.note-toc ul ul a {
+  margin-left: 0.4rem;
+  padding-block: 0.28rem;
+  color: var(--faint);
+  font-size: 0.8rem;
 }
 
 .chapter-list {
@@ -1070,6 +1189,19 @@ a:hover {
 
   .book-mobile-nav .chapter-list {
     margin-top: 0.75rem;
+  }
+
+  .book-mobile-nav .note-toc {
+    margin-top: 0.75rem;
+  }
+
+  .prose .equation-block {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .prose .equation-number {
+    margin-top: -1.25rem;
+    text-align: right;
   }
 
   .site-footer__inner {

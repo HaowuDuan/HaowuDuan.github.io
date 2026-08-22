@@ -5,6 +5,12 @@ interface Chapter {
   title: string;
   slug: string;
   url: string;
+  label?: string;
+  sections?: Array<{
+    title: string;
+    id: string;
+    label?: string;
+  }>;
 }
 
 interface Props {
@@ -16,12 +22,14 @@ interface Props {
   chapters: Chapter[];
   prevChapter?: { title: string; url: string } | null;
   nextChapter?: { title: string; url: string } | null;
+  eyebrow?: string;
 }
 
-const { title, description, math = false, bookTitle, bookIndex, chapters, prevChapter, nextChapter } = Astro.props;
+const { title, description, math = false, bookTitle, bookIndex, chapters, prevChapter, nextChapter, eyebrow } = Astro.props;
 const currentPath = Astro.url.pathname.replace(/\/$/, '');
 const isCurrent = (url: string) => currentPath === url.replace(/\/$/, '');
 const chapterIndex = Math.max(0, chapters.findIndex(chapter => isCurrent(chapter.url)));
+const currentChapter = chapters[chapterIndex];
 ---
 
 <Base title={title} description={description} math={math}>
@@ -32,8 +40,19 @@ const chapterIndex = Math.max(0, chapters.findIndex(chapter => isCurrent(chapter
         {chapters.map((chapter, index) => (
           <li>
             <a href={chapter.url} aria-current={isCurrent(chapter.url) ? 'page' : undefined}>
-              {index + 1}. {chapter.title}
+              {chapter.label ?? chapter.title}
             </a>
+            {isCurrent(chapter.url) && (chapter.sections?.length ?? 0) > 0 && (
+              <ol class="chapter-sublist" data-article-toc>
+                {chapter.sections?.map(section => (
+                  <li>
+                    <a href={`#${section.id}`}>
+                      {section.label ? `${section.label} ` : ''}{section.title}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            )}
           </li>
         ))}
       </ol>
@@ -41,20 +60,31 @@ const chapterIndex = Math.max(0, chapters.findIndex(chapter => isCurrent(chapter
 
     <div class="note-content">
       <details class="book-mobile-nav">
-        <summary>Chapters · {chapterIndex + 1}. {title}</summary>
+        <summary>Chapters · {currentChapter?.label ?? currentChapter?.title ?? title}</summary>
         <ol class="chapter-list">
-          {chapters.map((chapter, index) => (
+          {chapters.map(chapter => (
             <li>
               <a href={chapter.url} aria-current={isCurrent(chapter.url) ? 'page' : undefined}>
-                {index + 1}. {chapter.title}
+                {chapter.label ?? chapter.title}
               </a>
+              {isCurrent(chapter.url) && (chapter.sections?.length ?? 0) > 0 && (
+                <ol class="chapter-sublist" data-article-toc>
+                  {chapter.sections?.map(section => (
+                    <li>
+                      <a href={`#${section.id}`}>
+                        {section.label ? `${section.label} ` : ''}{section.title}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </li>
           ))}
         </ol>
       </details>
 
       <header class="article-header">
-        <p class="eyebrow">{bookTitle} · Chapter {chapterIndex + 1}</p>
+        <p class="eyebrow">{eyebrow ?? `${bookTitle} · ${currentChapter?.label ?? currentChapter?.title ?? title}`}</p>
         <h1 class="article-title">{title}</h1>
         {description && <p class="article-deck">{description}</p>}
       </header>

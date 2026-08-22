@@ -4,8 +4,14 @@ import { glob } from 'astro/loaders';
 const noteSchema = z.object({
   title: z.string(),
   order: z.number(),
+  chapterNumber: z.number().optional(),
   math: z.boolean().optional().default(false),
   description: z.string().optional(),
+  sections: z.array(z.object({
+    title: z.string(),
+    id: z.string(),
+    label: z.string().optional(),
+  })).optional().default([]),
 });
 
 const blogSchema = z.object({

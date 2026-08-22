@@ -1,99 +1,17 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A draft note on diffusion models, path integrals, score matching, and Fokker–Planck consistency">
-    <title>Diffusion Models and Path Integrals — Design Preview</title>
-    <link rel="stylesheet" href="vendor/katex/katex.min.css">
-    <link rel="stylesheet" href="styles.css">
-    <script defer src="preview.js"></script>
-  </head>
-  <body>
-    <div class="review-bar">Local design review · full diffusion-model draft · not published</div>
-    <header class="site-header">
-      <div class="site-header__inner">
-        <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
-        <nav class="site-nav" aria-label="Primary navigation">
-          <a href="index.html">about</a>
-          <a href="blog.html">blog</a>
-          <a href="publications.html">publications</a>
-          <a href="projects.html">projects</a>
-          <a href="repositories.html">repositories</a>
-          <a href="cv.html">CV</a>
-          <a href="notes.html" aria-current="page">notes</a>
-        </nav>
-      </div>
-    </header>
+---
+title: Diffusion Models and Path Integrals
+order: 1
+math: true
+description: Forward and reverse stochastic processes, score-matching objectives, and Fokker–Planck consistency
+sections:
+  - title: Path-integral formulation
+    id: path-integral-formulation-of-the-forward-and-reverse-processes
+    label: "1."
+  - title: Score-matching objectives
+    id: score-matching-objectives-and-fokkerplanck-consistency
+    label: "2."
+---
 
-    <nav class="notes-subnav" aria-label="Note collections">
-      <div class="notes-subnav__inner">
-        <a href="notes.html">LLM</a>
-        <a href="diffusion-notes.html" aria-current="page">Diffusion Models</a>
-        <span>Reinforcement Learning</span>
-        <span>GPUs</span>
-      </div>
-    </nav>
-
-    <main class="page-shell book-layout">
-      <aside class="book-sidebar" aria-label="Diffusion model note contents" data-article-toc>
-        <h2>Contents</h2>
-<ul>
-<li><a
-href="#path-integral-formulation-of-the-forward-and-reverse-processes">Path-integral
-formulation of the forward and reverse processes</a>
-<ul>
-<li><a href="#the-forward-process">The
-forward process</a></li>
-<li><a href="#the-reverse-process">The
-reverse process</a></li>
-</ul></li>
-<li><a href="#score-matching-objectives-and-fokkerplanck-consistency">Score-matching
-objectives and Fokker–Planck consistency</a>
-<ul>
-<li><a href="#direct-and-implicit-score-matching">Direct and implicit score
-matching</a></li>
-<li><a href="#denoising-score-matching">Denoising score matching</a></li>
-<li><a href="#sliced-and-implicit-sliced-score-matching">Sliced and implicit
-sliced score matching</a></li>
-<li><a href="#physics-informed-enforcement-of-the-fokkerplanck-equation">Physics-informed
-enforcement of the Fokker–Planck equation</a></li>
-</ul></li>
-</ul>
-      </aside>
-
-      <div class="note-content">
-        <details class="book-mobile-nav" data-responsive-details data-article-toc>
-          <summary>Contents · Diffusion Models and Path Integrals</summary>
-<ul>
-<li><a
-href="#path-integral-formulation-of-the-forward-and-reverse-processes">Path-integral
-formulation of the forward and reverse processes</a>
-<ul>
-<li><a href="#the-forward-process">The
-forward process</a></li>
-<li><a href="#the-reverse-process">The
-reverse process</a></li>
-</ul></li>
-<li><a href="#score-matching-objectives-and-fokkerplanck-consistency">Score-matching
-objectives and Fokker–Planck consistency</a>
-<ul>
-<li><a href="#direct-and-implicit-score-matching">Direct and implicit score
-matching</a></li>
-<li><a href="#denoising-score-matching">Denoising score matching</a></li>
-<li><a href="#sliced-and-implicit-sliced-score-matching">Sliced and implicit
-sliced score matching</a></li>
-<li><a href="#physics-informed-enforcement-of-the-fokkerplanck-equation">Physics-informed
-enforcement of the Fokker–Planck equation</a></li>
-</ul></li>
-</ul>
-        </details>
-        <header class="article-header">
-          <p class="eyebrow">Diffusion Models · Draft Note</p>
-          <h1 class="article-title">Diffusion Models and Path Integrals</h1>
-          <p class="article-deck">Forward and reverse stochastic processes, score-matching objectives, and Fokker–Planck consistency.</p>
-        </header>
-        <article class="prose" data-linked-headings>
 <h2
 id="path-integral-formulation-of-the-forward-and-reverse-processes">Path-integral
 formulation of the forward and reverse processes</h2>
@@ -688,7 +606,7 @@ to a simple reference distribution
 The two endpoints do not select a unique connection: infinitely many
 families can share them.</p>
 <figure class="distribution-paths-figure">
-<img src="assets/diffusion-distribution-paths.svg" alt="Three different paths connecting the data distribution P zero to the terminal distribution P T">
+<img src="/notes/diffusion-distribution-paths.svg" alt="Three different paths connecting the data distribution P zero to the terminal distribution P T">
 <figcaption>Different distribution paths can share the same initial and terminal densities.</figcaption>
   </figure>
 <p>The kernel
@@ -1020,19 +938,3 @@ two explicit gradients written here.<a href="#fnref1"
 class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
-        </article>
-        <nav class="chapter-footer" aria-label="Note-set navigation">
-          <a href="notes.html">← LLM Notes</a>
-          <span class="disabled chapter-next">Next →</span>
-        </nav>
-      </div>
-    </main>
-
-    <footer class="site-footer">
-      <div class="site-footer__inner">
-        <span>Draft note · local preview only</span>
-        <a href="notes.html">LLM notes</a>
-      </div>
-    </footer>
-  </body>
-</html>

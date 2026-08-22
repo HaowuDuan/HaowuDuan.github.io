@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import katex from "katex";
 
 const mathPattern = /<math\s+display="(inline|block)"[^>]*>[\s\S]*?<annotation encoding="application\/x-tex">([\s\S]*?)<\/annotation>[\s\S]*?<\/math>/g;
+const fallbackMathPattern = /<span\s+class="math (inline|display)">([\s\S]*?)<\/span>/g;
 
 function decodeHtml(text) {
   return text
@@ -18,31 +19,104 @@ function decodeHtml(text) {
     .replace(/&amp;/g, "&");
 }
 
+function normalizePandocFallbackMath(source) {
+  return source.replace(fallbackMathPattern, (_, mode, encodedTex) => {
+    let tex = encodedTex.trim();
+    const delimiterLength = mode === 'display' ? 2 : 1;
+    const delimiter = '$'.repeat(delimiterLength);
+
+    if (tex.startsWith(delimiter) && tex.endsWith(delimiter)) {
+      tex = tex.slice(delimiterLength, -delimiterLength).trim();
+    }
+
+    const display = mode === 'display' ? 'block' : 'inline';
+    return `<math display="${display}"><annotation encoding="application/x-tex">${tex}</annotation></math>`;
+  });
+}
+
+function equationMetadata(tex, equationNumber) {
+  const environment = tex.match(/\\begin\{(equation|align)(\*)?\}/);
+  const numbered = Boolean(environment && !environment[2]);
+  const label = tex.match(/\\label\{([^}]+)\}/)?.[1] ?? null;
+
+  return {
+    label,
+    number: numbered ? equationNumber + 1 : null,
+    nextNumber: numbered ? equationNumber + 1 : equationNumber,
+  };
+}
+
+function normalizeTex(tex) {
+  return tex
+    .replace(/\\label\{[^}]+\}/g, "")
+    .replace(/\\nonumber/g, "")
+    .replace(/\\begin\{equation\*?\}/g, "")
+    .replace(/\\end\{equation\*?\}/g, "")
+    .replace(/\\begin\{align\*?\}/g, "\\begin{aligned}")
+    .replace(/\\end\{align\*?\}/g, "\\end{aligned}")
+    .trim();
+}
+
 async function renderFile(file) {
-  const source = await readFile(file, "utf8");
+  const source = normalizePandocFallbackMath(await readFile(file, "utf8"));
   let count = 0;
+  let equationNumber = 0;
+  const equationLabels = new Map();
+  const metadata = [...source.matchAll(mathPattern)].map(match => {
+    const display = match[1];
+    const tex = decodeHtml(match[2].trim());
+    if (display !== "block") return null;
+
+    const equation = equationMetadata(tex, equationNumber);
+    equationNumber = equation.nextNumber;
+    if (equation.label && equation.number) {
+      equationLabels.set(equation.label, equation.number);
+    }
+    return equation;
+  });
+  let formulaIndex = 0;
 
   const rendered = source.replace(mathPattern, (_, display, encodedTex) => {
     const tex = decodeHtml(encodedTex.trim());
+    const renderTex = normalizeTex(tex);
+    const equation = metadata[formulaIndex];
+    formulaIndex += 1;
     count += 1;
 
     try {
-      return katex.renderToString(tex, {
+      const katexHtml = katex.renderToString(renderTex, {
         displayMode: display === "block",
         output: "htmlAndMathml",
         throwOnError: true,
         strict: "warn",
         trust: false,
       });
+      if (!equation?.number) return katexHtml;
+
+      const id = equation.label ? ` id="${equation.label}"` : "";
+      return `<span class="equation-block"${id}>${katexHtml}<span class="equation-number" aria-hidden="true">(${equation.number})</span></span>`;
     } catch (error) {
-      throw new Error(`${file}: KaTeX could not render formula ${count}: ${tex}`, {
+      throw new Error(`${file}: KaTeX could not render formula ${count}: ${renderTex}`, {
         cause: error,
       });
     }
   });
 
-  await writeFile(file, rendered);
-  process.stdout.write(`${file}: rendered ${count} formulas with KaTeX\n`);
+  const linked = rendered.replace(
+    /<a\s+([^>]*data-reference-type="eqref"[^>]*)>[\s\S]*?<\/a>/g,
+    (match, attributes) => {
+      const label = attributes.match(/href="#([^"]+)"/)?.[1];
+      const number = label ? equationLabels.get(label) : null;
+      return number
+        ? `<a class="equation-reference" href="#${label}">(${number})</a>`
+        : match;
+    },
+  );
+
+  await writeFile(file, linked.replace(/[ \t]+$/gm, ''));
+  process.stdout.write(
+    `${file}: rendered ${count} formulas with KaTeX and numbered ${equationNumber} equation blocks\n`,
+  );
 }
 
 for (const file of process.argv.slice(2)) {

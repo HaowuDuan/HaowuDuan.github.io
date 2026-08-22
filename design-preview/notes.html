@@ -41,10 +41,12 @@
           <li><a href="notes.html" aria-current="page">Introduction</a></li>
           <li><a href="#modern-llm-architecture">1. Modern LLM Architecture</a></li>
           <li>
-            <a href="#llm-training">2. LLM Training</a>
+            <a href="llm-optimization.html#one-parameter-in-a-smooth-loss">2. LLM Training</a>
             <ol class="chapter-sublist">
-              <li><a href="#optimizer">2.1 Optimizer</a></li>
-              <li><a href="#scheduler">2.2 Scheduler</a></li>
+              <li><a href="llm-optimization.html#one-parameter-in-a-smooth-loss">2.1 Overview</a></li>
+              <li><a href="llm-optimization.html#three-failure-modes-three-optimizers">2.2 Optimizer</a></li>
+              <li><a href="llm-optimization.html#learning-rate-schedules-why-warm-up-and-warm-down">2.3 Scheduler</a></li>
+              <li><a href="llm-optimization.html#sec:weight_decay">2.4 Weight Decay</a></li>
             </ol>
           </li>
           <li><a href="#parallelism">3. Parallelism</a></li>
@@ -59,10 +61,12 @@
             <li><a href="notes.html" aria-current="page">Introduction</a></li>
             <li><a href="#modern-llm-architecture">1. Modern LLM Architecture</a></li>
             <li>
-              <a href="#llm-training">2. LLM Training</a>
+              <a href="llm-optimization.html#one-parameter-in-a-smooth-loss">2. LLM Training</a>
               <ol class="chapter-sublist">
-                <li><a href="#optimizer">2.1 Optimizer</a></li>
-                <li><a href="#scheduler">2.2 Scheduler</a></li>
+                <li><a href="llm-optimization.html#one-parameter-in-a-smooth-loss">2.1 Overview</a></li>
+                <li><a href="llm-optimization.html#three-failure-modes-three-optimizers">2.2 Optimizer</a></li>
+                <li><a href="llm-optimization.html#learning-rate-schedules-why-warm-up-and-warm-down">2.3 Scheduler</a></li>
+                <li><a href="llm-optimization.html#sec:weight_decay">2.4 Weight Decay</a></li>
               </ol>
             </li>
             <li><a href="#parallelism">3. Parallelism</a></li>
@@ -86,16 +90,19 @@
           <p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>p</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>x</mi><mi>T</mi></msub><mo stretchy="false">)</mo><mo>=</mo><munderover><mo>∏</mo><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow><mi>T</mi></munderover><mi>p</mi><mo stretchy="false">(</mo><msub><mi>x</mi><mi>t</mi></msub><mo>∣</mo><msub><mi>x</mi><mrow><mo>&lt;</mo><mi>t</mi></mrow></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">p(x_1,\ldots,x_T)=\prod_{t=1}^{T}p(x_t\mid x_{&lt;t}).</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.1389em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:3.0954em;vertical-align:-1.2671em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283em;"><span style="top:-1.8829em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∏</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.1389em;">T</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2671em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∣</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mrel mtight">&lt;</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1774em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></p>
 
           <h2 id="llm-training">2. LLM Training</h2>
-          <p>The sidebar stays quiet and the active chapter is indicated with a narrow line, not a filled blue rectangle. The content column keeps the same measure as a blog article so moving between formats does not require learning a new reading environment.</p>
+          <p>The first draft in this section develops optimizers, learning-rate schedulers, and weight decay from first principles.</p>
 
-          <h3 id="optimizer">2.1 Optimizer</h3>
-          <pre><code>for batch in data:
-    loss = model(batch)
-    loss.backward()
-    optimizer.step()</code></pre>
+          <h3 id="training-overview">2.1 Overview</h3>
+          <p><a href="llm-optimization.html#one-parameter-in-a-smooth-loss">Start with the training overview</a>, which establishes the loss geometry, local transport, and the roles of the optimizer, scheduler, and weight decay.</p>
 
-          <h3 id="scheduler">2.2 Scheduler</h3>
-          <p>This subsection will cover learning-rate schedules and their relationship to optimization dynamics.</p>
+          <h3 id="optimizer">2.2 Optimizer</h3>
+          <p><a href="llm-optimization.html#three-failure-modes-three-optimizers">Read the optimizer draft</a>, including momentum, Adam, and Muon as responses to distinct failure modes.</p>
+
+          <h3 id="scheduler">2.3 Scheduler</h3>
+          <p><a href="llm-optimization.html#learning-rate-schedules-why-warm-up-and-warm-down">Read the scheduler draft</a>, covering warm-up, warm-down, and their relationship to optimization dynamics.</p>
+
+          <h3 id="weight-decay">2.4 Weight Decay</h3>
+          <p><a href="llm-optimization.html#sec:weight_decay">Read the weight-decay draft</a>, distinguishing zero-centered penalties, generalization, and decoupled damping.</p>
 
           <h2 id="parallelism">3. Parallelism</h2>
           <p>This mock chapter is intentionally short. The full article preview is the stress test for code, tables, wide figures, algorithms, and deeply nested technical structure.</p>

@@ -12,7 +12,13 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 
 const sorted = await getNotes('llm-notes');
-const chapters = sorted.map(ch => ({ title: ch.data.title, slug: ch.id, url: `/llm-book/${ch.id}/` }));
+const chapters = sorted.map(ch => ({
+  title: ch.data.title,
+  slug: ch.id,
+  url: `/llm-book/${ch.id}/`,
+  label: ch.data.chapterNumber ? `${ch.data.chapterNumber}. ${ch.data.title}` : ch.data.title,
+  sections: ch.data.sections,
+}));
 const idx = sorted.findIndex(ch => ch.id === entry.id);
 const prevChapter = idx > 0 ? { title: sorted[idx - 1].data.title, url: `/llm-book/${sorted[idx - 1].id}/` } : null;
 const nextChapter = idx < sorted.length - 1 ? { title: sorted[idx + 1].data.title, url: `/llm-book/${sorted[idx + 1].id}/` } : null;

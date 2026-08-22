@@ -3,13 +3,14 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Diffusion Models — Notes — Design Preview</title>
+    <meta name="description" content="A draft note on diffusion models, path integrals, score matching, and Fokker–Planck consistency">
+    <title>Diffusion Models and Path Integrals — Design Preview</title>
     <link rel="stylesheet" href="vendor/katex/katex.min.css">
     <link rel="stylesheet" href="styles.css">
     <script defer src="preview.js"></script>
   </head>
   <body>
-    <div class="review-bar">Local design review · diffusion model outline · not part of the proposed site</div>
+    <div class="review-bar">Local design review · full diffusion-model draft · not published</div>
     <header class="site-header">
       <div class="site-header__inner">
         <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
@@ -35,33 +36,23 @@
     </nav>
 
     <main class="page-shell book-layout">
-      <aside class="book-sidebar" aria-label="Diffusion model notes navigation">
-        <h2>Diffusion Models</h2>
-        <ol class="chapter-list">
-          <li><a href="#path-integral-formulation">1. Path-Integral Formulation of the Diffusion Model</a></li>
-          <li><a href="#score-matching-loss">2. Variation of the Score-Matching Loss Function</a></li>
-        </ol>
+      <aside class="book-sidebar" aria-label="Diffusion model note contents" data-article-toc>
+        <h2>Contents</h2>
+$toc$
       </aside>
 
       <div class="note-content">
-        <details class="book-mobile-nav">
-          <summary>Sections · Diffusion Models</summary>
-          <ol class="chapter-list">
-            <li><a href="#path-integral-formulation">1. Path-Integral Formulation of the Diffusion Model</a></li>
-            <li><a href="#score-matching-loss">2. Variation of the Score-Matching Loss Function</a></li>
-          </ol>
+        <details class="book-mobile-nav" data-responsive-details data-article-toc>
+          <summary>Contents · Diffusion Models and Path Integrals</summary>
+$toc$
         </details>
         <header class="article-header">
-          <p class="eyebrow">Notes · Outline</p>
-          <h1 class="article-title">Diffusion Models</h1>
-          <p class="article-deck">A working outline for notes on the formulation and training objectives of diffusion models.</p>
+          <p class="eyebrow">Diffusion Models · Draft Note</p>
+          <h1 class="article-title">Diffusion Models and Path Integrals</h1>
+          <p class="article-deck">Forward and reverse stochastic processes, score-matching objectives, and Fokker–Planck consistency.</p>
         </header>
         <article class="prose" data-linked-headings>
-          <h2 id="path-integral-formulation">1. Path-Integral Formulation of the Diffusion Model</h2>
-          <p>This section is reserved for the draft.</p>
-
-          <h2 id="score-matching-loss">2. Variation of the Score-Matching Loss Function</h2>
-          <p>This section is reserved for the draft.</p>
+$body$
         </article>
         <nav class="chapter-footer" aria-label="Note-set navigation">
           <a href="notes.html">← LLM Notes</a>
@@ -72,7 +63,7 @@
 
     <footer class="site-footer">
       <div class="site-footer__inner">
-        <span>© 2026 Haowu Duan</span>
+        <span>Draft note · local preview only</span>
         <a href="notes.html">LLM notes</a>
       </div>
     </footer>

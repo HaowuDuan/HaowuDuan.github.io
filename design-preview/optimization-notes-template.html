@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A draft LLM training note on optimizers, learning-rate schedulers, and weight decay">
+    <title>Optimizers, Schedulers, and Weight Decay — LLM Notes — Design Preview</title>
+    <link rel="stylesheet" href="vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="preview.js"></script>
+  </head>
+  <body>
+    <div class="review-bar">Local design review · full LLM optimization draft · not published</div>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">about</a>
+          <a href="blog.html">blog</a>
+          <a href="publications.html">publications</a>
+          <a href="projects.html">projects</a>
+          <a href="repositories.html">repositories</a>
+          <a href="cv.html">CV</a>
+          <a href="notes.html" aria-current="page">notes</a>
+        </nav>
+      </div>
+    </header>
+
+    <nav class="notes-subnav" aria-label="Note collections">
+      <div class="notes-subnav__inner">
+        <a href="notes.html" aria-current="page">LLM</a>
+        <a href="diffusion-notes.html">Diffusion Models</a>
+        <span>Reinforcement Learning</span>
+        <span>GPUs</span>
+      </div>
+    </nav>
+
+    <main class="page-shell book-layout">
+      <aside class="book-sidebar" aria-label="LLM note contents" data-article-toc>
+        <h2><a href="notes.html">LLM Notes</a></h2>
+        <ol class="chapter-list">
+          <li><a href="notes.html">Introduction</a></li>
+          <li><a href="notes.html#modern-llm-architecture">1. Modern LLM Architecture</a></li>
+          <li>
+            <a href="#one-parameter-in-a-smooth-loss" aria-current="page">2. LLM Training</a>
+            <ol class="chapter-sublist">
+              <li><a href="#one-parameter-in-a-smooth-loss">2.1 Overview</a></li>
+              <li><a href="#three-failure-modes-three-optimizers">2.2 Optimizer</a></li>
+              <li><a href="#learning-rate-schedules-why-warm-up-and-warm-down">2.3 Scheduler</a></li>
+              <li><a href="#sec:weight_decay">2.4 Weight Decay</a></li>
+            </ol>
+          </li>
+          <li><a href="notes.html#parallelism">3. Parallelism</a></li>
+          <li><a href="notes.html#post-training">4. Post-training</a></li>
+        </ol>
+      </aside>
+
+      <div class="note-content">
+        <details class="book-mobile-nav" data-responsive-details data-article-toc>
+          <summary>Contents · LLM Training</summary>
+          <ol class="chapter-list">
+            <li><a href="#one-parameter-in-a-smooth-loss">2.1 Overview</a></li>
+            <li><a href="#three-failure-modes-three-optimizers">2.2 Optimizer</a></li>
+            <li><a href="#learning-rate-schedules-why-warm-up-and-warm-down">2.3 Scheduler</a></li>
+            <li><a href="#sec:weight_decay">2.4 Weight Decay</a></li>
+          </ol>
+        </details>
+        <header class="article-header">
+          <p class="eyebrow">LLM Notes · Training</p>
+          <h1 class="article-title">Optimizers, Schedulers, and Weight Decay from First Principles</h1>
+          <p class="article-deck">Optimization dynamics, common failure modes, learning-rate schedules, and decoupled parameter damping.</p>
+        </header>
+        <article class="prose" data-linked-headings>
+$body$
+        </article>
+        <nav class="chapter-footer" aria-label="Chapter navigation">
+          <a href="notes.html#modern-llm-architecture">← Modern LLM Architecture</a>
+          <a href="notes.html#parallelism">Parallelism →</a>
+        </nav>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>Draft note · local preview only</span>
+        <a href="diffusion-notes.html">Diffusion model notes</a>
+      </div>
+    </footer>
+  </body>
+</html>
