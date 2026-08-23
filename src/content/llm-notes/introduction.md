@@ -4,4 +4,6 @@ order: 0
 description: Notes on large language models from a physics perspective
 ---
 
-This is my attempt to write what I have learned about large language models from a physics perspective. It is ongoing. After I finish the LLM part, there will be a separate set of notes on reinforcement learning.
+This set of notes is a work in progress. It reflects my latest understanding of large language models and records facts and ideas that I want to revisit whenever I need to refresh my memory. I am writing it primarily for myself, but once the full set is complete, I intend to polish it and make it accessible to a broader audience.
+
+Comments, corrections, and suggestions are welcome. You can reach me at [hwdcgc@gmail.com](mailto:hwdcgc@gmail.com).
