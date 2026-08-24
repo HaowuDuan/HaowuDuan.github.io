@@ -68,14 +68,14 @@ $\eta_t$ sets the distance.
 
 \paragraph{Global target and local information.}
 
-Choose a global minimizer $\widetilde\theta$, and denote the error at iteration
-$t$ by $e_t$ and the curvature at the minimizer by $\widetilde h$:
+Choose a global minimizer $\overset{\sim}{\theta}$, and denote the error at iteration
+$t$ by $e_t$ and the curvature at the minimizer by $\overset{\sim}{h}$:
 \begin{equation}
   \begin{aligned}
-    \widetilde\theta&\in\arg\min_{\theta\in\R}V(\theta),
-    &e_t&\equiv\theta_t-\widetilde\theta,\\
-    V'(\widetilde\theta)&=0,
-    &\widetilde h&\equiv V''(\widetilde\theta)\geq0.
+    \overset{\sim}{\theta}&\in\arg\min_{\theta\in\R}V(\theta),
+    &e_t&\equiv\theta_t-\overset{\sim}{\theta},\\
+    V'(\overset{\sim}{\theta})&=0,
+    &\overset{\sim}{h}&\equiv V''(\overset{\sim}{\theta})\geq0.
   \end{aligned}
 \end{equation}
 At the position $\theta_t$ in parameter space, the current gradient $g_t$ and
@@ -91,17 +91,17 @@ in closed form is
 \begin{equation}\label{eq:one_d_gd_closed}
   \theta_{t+1}=\theta_t-\eta_tg_t.
 \end{equation}
-Subtracting the fixed number $\widetilde\theta$ from both sides and using
-$e_t\equiv\theta_t-\widetilde\theta$ gives the exact finite-error update
+Subtracting the fixed number $\overset{\sim}{\theta}$ from both sides and using
+$e_t\equiv\theta_t-\overset{\sim}{\theta}$ gives the exact finite-error update
 \begin{equation}\label{eq:error_update}
   e_{t+1}=e_t-\eta_tg_t.
 \end{equation}
 For the iteration to make progress toward the chosen minimizer, we would like
 the error magnitude---the distance $|e_t|$ from $\theta_t$ to
-$\widetilde\theta$---to decrease from one step to the next, so that
+$\overset{\sim}{\theta}$---to decrease from one step to the next, so that
 $|e_{t+1}|<|e_t|$. However, the algorithm cannot test this desired contraction
 directly. It can evaluate $g_t$ at the current iterate, but it does not know
-$e_t$, because the latter depends on the unknown minimizer $\widetilde\theta$.
+$e_t$, because the latter depends on the unknown minimizer $\overset{\sim}{\theta}$.
 
 The loss geometry available around the current iterate is local. In particular,
 the curvature $h_t$ determines how the gradient changes, to first order, under
@@ -149,22 +149,22 @@ Section~\ref{sec:weight_decay} explains when this equivalence fails and then
 separates the physical effects of the two implementations.
 
 To express the same update in terms of the optimization error, subtract
-$\widetilde\theta$ from both sides:
+$\overset{\sim}{\theta}$ from both sides:
 \begin{equation}\label{eq:error_update_decay}
   \begin{aligned}
-    \theta_{t+1}-\widetilde\theta
-    &=\theta_t-\widetilde\theta-\eta_t(g_t+\lambda_t\theta_t),\\
+    \theta_{t+1}-\overset{\sim}{\theta}
+    &=\theta_t-\overset{\sim}{\theta}-\eta_t(g_t+\lambda_t\theta_t),\\
     e_{t+1}
-    &=e_t-\eta_tg_t-\eta_t\lambda_t(e_t+\widetilde\theta)\\
+    &=e_t-\eta_tg_t-\eta_t\lambda_t(e_t+\overset{\sim}{\theta})\\
     &=(1-\eta_t\lambda_t)e_t-\eta_tg_t
-      -\eta_t\lambda_t\widetilde\theta.
+      -\eta_t\lambda_t\overset{\sim}{\theta}.
   \end{aligned}
 \end{equation}
 Equation~\eqref{eq:error_update_decay} already shows the important point:
-weight decay acts on \(\theta_t=e_t+\widetilde\theta\), not on the error \(e_t\)
+weight decay acts on \(\theta_t=e_t+\overset{\sim}{\theta}\), not on the error \(e_t\)
 alone. It is centered at the parameter origin, not at the unknown minimizer,
 so it cannot be interpreted as directly keeping the distance to
-\(\widetilde\theta\) small. Section~\ref{sec:weight_decay} makes this distinction
+\(\overset{\sim}{\theta}\) small. Section~\ref{sec:weight_decay} makes this distinction
 explicit.
 
 \paragraph{Local transport along the training curve.}
@@ -938,60 +938,60 @@ the decay outside them.
 
 \subsection{Coupled decay: distance to the origin is not distance to the minimum}
 
-Let \(\widetilde{\thet}\) be an unregularized local minimum, define the error
-\(\bm e=\thet-\widetilde{\thet}\), and let \(H\) be the Hessian at that minimum.
+Let \(\overset{\sim}{\thet}\) be an unregularized local minimum, define the error
+\(\bm e=\thet-\overset{\sim}{\thet}\), and let \(H\) be the Hessian at that minimum.
 Locally,
 \begin{equation}\label{eq:local_quadratic_vector}
-  V(\widetilde{\thet}+\bm e)
-  =V(\widetilde{\thet})
+  V(\overset{\sim}{\thet}+\bm e)
+  =V(\overset{\sim}{\thet})
    +\frac12\bm e^\top H\bm e
    +O(\lVert\bm e\rVert^3).
 \end{equation}
 If the goal were to keep the parameters close to this particular minimum,
-the relevant penalty would be centered on \(\widetilde{\thet}\):
+the relevant penalty would be centered on \(\overset{\sim}{\thet}\):
 \begin{equation}\label{eq:centered_decay_ideal}
   V_{\rm centered}(\thet)
   =V(\thet)+\frac{\lambda}{2}
-   \lVert\thet-\widetilde{\thet}\rVert^2.
+   \lVert\thet-\overset{\sim}{\thet}\rVert^2.
 \end{equation}
 In the local coordinate \(\bm e\), this changes the quadratic form from
 \(H\) to \(H+\lambda I\) but leaves its minimum at \(\bm e=0\). It is not a
-usable training rule, because the unknown \(\widetilde{\thet}\) is precisely what
+usable training rule, because the unknown \(\overset{\sim}{\thet}\) is precisely what
 the optimization is trying to find.
 
 Ordinary coupled weight decay is instead centered at \(\thet=0\). Substituting
-\(\thet=\widetilde{\thet}+\bm e\) into Eq.~\eqref{eq:section4_coupled_loss} gives
+\(\thet=\overset{\sim}{\thet}+\bm e\) into Eq.~\eqref{eq:section4_coupled_loss} gives
 \begin{equation}\label{eq:origin_decay_in_error_coordinates}
-  V_\lambda(\widetilde{\thet}+\bm e)
-  =V(\widetilde{\thet})
-   +\frac{\lambda}{2}\lVert\widetilde{\thet}\rVert^2
+  V_\lambda(\overset{\sim}{\thet}+\bm e)
+  =V(\overset{\sim}{\thet})
+   +\frac{\lambda}{2}\lVert\overset{\sim}{\thet}\rVert^2
    +\frac12\bm e^\top(H+\lambda I)\bm e
-   +\lambda\widetilde{\thet}^{\top}\bm e
+   +\lambda\overset{\sim}{\thet}^{\top}\bm e
    +O(\lVert\bm e\rVert^3).
 \end{equation}
-The linear term \(\lambda\widetilde{\thet}^{\top}\bm e\) moves the minimum. To
-quadratic order, its error relative to \(\widetilde{\thet}\) satisfies
+The linear term \(\lambda\overset{\sim}{\thet}^{\top}\bm e\) moves the minimum. To
+quadratic order, its error relative to \(\overset{\sim}{\thet}\) satisfies
 \begin{equation}
   (H+\lambda I)\bm e_\lambda^\star
-  =-\lambda\widetilde{\thet},
+  =-\lambda\overset{\sim}{\thet},
 \end{equation}
 and hence
 \begin{equation}\label{eq:regularized_error}
   \bm e_\lambda^\star
-  =-\lambda(H+\lambda I)^{-1}\widetilde{\thet}.
+  =-\lambda(H+\lambda I)^{-1}\overset{\sim}{\thet}.
 \end{equation}
 The corresponding parameter is
 \begin{equation}\label{eq:regularized_minimizer}
   \thet_\lambda^\star
-  =(H+\lambda I)^{-1}H\widetilde{\thet}.
+  =(H+\lambda I)^{-1}H\overset{\sim}{\thet}.
 \end{equation}
 If \(Hu_i=h_i u_i\), then along that Hessian eigenvector,
 \begin{equation}
   e_{\lambda,i}^\star
-  =-\frac{\lambda}{h_i+\lambda}\widetilde\theta_i,
+  =-\frac{\lambda}{h_i+\lambda}\overset{\sim}{\theta}_i,
   \qquad
   \theta_{\lambda,i}^\star
-  =\frac{h_i}{h_i+\lambda}\widetilde\theta_i.
+  =\frac{h_i}{h_i+\lambda}\overset{\sim}{\theta}_i.
 \end{equation}
 Thus ordinary weight decay does not directly reduce the distance to the
 unregularized minimum; it introduces a bias toward the chosen parameter
@@ -1003,7 +1003,7 @@ from a local operator with a dispersion relation \(h(k)\).
 Spatial translation \(x\mapsto x+a\) and a shift of the parameter origin
 \(\thet\mapsto\thet+\bm c\) are different symmetries. The norm
 \(\lVert\thet\rVert^2\) is not invariant under the latter, so translational
-invariance cannot replace \(\thet\) by \(\thet-\widetilde{\thet}\) in the decay
+invariance cannot replace \(\thet\) by \(\thet-\overset{\sim}{\thet}\) in the decay
 term. Finally, the locality of the quadratic approximation is enforced by a
 small update or a trust region, for example
 \begin{equation}
