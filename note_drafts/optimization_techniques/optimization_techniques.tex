@@ -68,14 +68,14 @@ $\eta_t$ sets the distance.
 
 \paragraph{Global target and local information.}
 
-Choose a global minimizer $\tilde\theta$, and denote the error at iteration
-$t$ by $e_t$ and the curvature at the minimizer by $\tilde h$:
+Choose a global minimizer $\widetilde\theta$, and denote the error at iteration
+$t$ by $e_t$ and the curvature at the minimizer by $\widetilde h$:
 \begin{equation}
   \begin{aligned}
-    \tilde\theta&\in\arg\min_{\theta\in\R}V(\theta),
-    &e_t&\equiv\theta_t-\tilde\theta,\\
-    V'(\tilde\theta)&=0,
-    &\tilde h&\equiv V''(\tilde\theta)\geq0.
+    \widetilde\theta&\in\arg\min_{\theta\in\R}V(\theta),
+    &e_t&\equiv\theta_t-\widetilde\theta,\\
+    V'(\widetilde\theta)&=0,
+    &\widetilde h&\equiv V''(\widetilde\theta)\geq0.
   \end{aligned}
 \end{equation}
 At the position $\theta_t$ in parameter space, the current gradient $g_t$ and
@@ -91,17 +91,17 @@ in closed form is
 \begin{equation}\label{eq:one_d_gd_closed}
   \theta_{t+1}=\theta_t-\eta_tg_t.
 \end{equation}
-Subtracting the fixed number $\tilde\theta$ from both sides and using
-$e_t\equiv\theta_t-\tilde\theta$ gives the exact finite-error update
+Subtracting the fixed number $\widetilde\theta$ from both sides and using
+$e_t\equiv\theta_t-\widetilde\theta$ gives the exact finite-error update
 \begin{equation}\label{eq:error_update}
   e_{t+1}=e_t-\eta_tg_t.
 \end{equation}
 For the iteration to make progress toward the chosen minimizer, we would like
 the error magnitude---the distance $|e_t|$ from $\theta_t$ to
-$\tilde\theta$---to decrease from one step to the next, so that
+$\widetilde\theta$---to decrease from one step to the next, so that
 $|e_{t+1}|<|e_t|$. However, the algorithm cannot test this desired contraction
 directly. It can evaluate $g_t$ at the current iterate, but it does not know
-$e_t$, because the latter depends on the unknown minimizer $\tilde\theta$.
+$e_t$, because the latter depends on the unknown minimizer $\widetilde\theta$.
 
 The loss geometry available around the current iterate is local. In particular,
 the curvature $h_t$ determines how the gradient changes, to first order, under
@@ -149,22 +149,22 @@ Section~\ref{sec:weight_decay} explains when this equivalence fails and then
 separates the physical effects of the two implementations.
 
 To express the same update in terms of the optimization error, subtract
-$\tilde\theta$ from both sides:
+$\widetilde\theta$ from both sides:
 \begin{equation}\label{eq:error_update_decay}
   \begin{aligned}
-    \theta_{t+1}-\tilde\theta
-    &=\theta_t-\tilde\theta-\eta_t(g_t+\lambda_t\theta_t),\\
+    \theta_{t+1}-\widetilde\theta
+    &=\theta_t-\widetilde\theta-\eta_t(g_t+\lambda_t\theta_t),\\
     e_{t+1}
-    &=e_t-\eta_tg_t-\eta_t\lambda_t(e_t+\tilde\theta)\\
+    &=e_t-\eta_tg_t-\eta_t\lambda_t(e_t+\widetilde\theta)\\
     &=(1-\eta_t\lambda_t)e_t-\eta_tg_t
-      -\eta_t\lambda_t\tilde\theta.
+      -\eta_t\lambda_t\widetilde\theta.
   \end{aligned}
 \end{equation}
 Equation~\eqref{eq:error_update_decay} already shows the important point:
-weight decay acts on \(\theta_t=e_t+\tilde\theta\), not on the error \(e_t\)
+weight decay acts on \(\theta_t=e_t+\widetilde\theta\), not on the error \(e_t\)
 alone. It is centered at the parameter origin, not at the unknown minimizer,
 so it cannot be interpreted as directly keeping the distance to
-\(\tilde\theta\) small. Section~\ref{sec:weight_decay} makes this distinction
+\(\widetilde\theta\) small. Section~\ref{sec:weight_decay} makes this distinction
 explicit.
 
 \paragraph{Local transport along the training curve.}
@@ -913,9 +913,9 @@ Coupled \(L_2\) decay adds the quadratic term directly to the loss,
 \end{equation}
 and therefore replaces the task gradient by
 \begin{equation}
-  \bar g_t=g_t+\lambda_t\thet_t.
+  \overline{g}_t=g_t+\lambda_t\thet_t.
 \end{equation}
-Adam then uses \(\bar g_t\), rather than \(g_t\), in both moment recurrences.
+Adam then uses \(\overline{g}_t\), rather than \(g_t\), in both moment recurrences.
 Let \(\widehat{\bm m}_t^{L_2}\) and \(\widehat{\bm s}_t^{L_2}\) denote the
 resulting moments, and let \(P_t^{L_2}\) be constructed from
 \(\widehat{\bm s}_t^{L_2}\) by Eq.~\eqref{eq:section4_adam_preconditioner}.
@@ -938,60 +938,60 @@ the decay outside them.
 
 \subsection{Coupled decay: distance to the origin is not distance to the minimum}
 
-Let \(\tilde{\thet}\) be an unregularized local minimum, define the error
-\(\bm e=\thet-\tilde{\thet}\), and let \(H\) be the Hessian at that minimum.
+Let \(\widetilde{\thet}\) be an unregularized local minimum, define the error
+\(\bm e=\thet-\widetilde{\thet}\), and let \(H\) be the Hessian at that minimum.
 Locally,
 \begin{equation}\label{eq:local_quadratic_vector}
-  V(\tilde{\thet}+\bm e)
-  =V(\tilde{\thet})
+  V(\widetilde{\thet}+\bm e)
+  =V(\widetilde{\thet})
    +\frac12\bm e^\top H\bm e
    +O(\lVert\bm e\rVert^3).
 \end{equation}
 If the goal were to keep the parameters close to this particular minimum,
-the relevant penalty would be centered on \(\tilde{\thet}\):
+the relevant penalty would be centered on \(\widetilde{\thet}\):
 \begin{equation}\label{eq:centered_decay_ideal}
   V_{\rm centered}(\thet)
   =V(\thet)+\frac{\lambda}{2}
-   \lVert\thet-\tilde{\thet}\rVert^2.
+   \lVert\thet-\widetilde{\thet}\rVert^2.
 \end{equation}
 In the local coordinate \(\bm e\), this changes the quadratic form from
 \(H\) to \(H+\lambda I\) but leaves its minimum at \(\bm e=0\). It is not a
-usable training rule, because the unknown \(\tilde{\thet}\) is precisely what
+usable training rule, because the unknown \(\widetilde{\thet}\) is precisely what
 the optimization is trying to find.
 
 Ordinary coupled weight decay is instead centered at \(\thet=0\). Substituting
-\(\thet=\tilde{\thet}+\bm e\) into Eq.~\eqref{eq:section4_coupled_loss} gives
+\(\thet=\widetilde{\thet}+\bm e\) into Eq.~\eqref{eq:section4_coupled_loss} gives
 \begin{equation}\label{eq:origin_decay_in_error_coordinates}
-  V_\lambda(\tilde{\thet}+\bm e)
-  =V(\tilde{\thet})
-   +\frac{\lambda}{2}\lVert\tilde{\thet}\rVert^2
+  V_\lambda(\widetilde{\thet}+\bm e)
+  =V(\widetilde{\thet})
+   +\frac{\lambda}{2}\lVert\widetilde{\thet}\rVert^2
    +\frac12\bm e^\top(H+\lambda I)\bm e
-   +\lambda\tilde{\thet}^{\top}\bm e
+   +\lambda\widetilde{\thet}^{\top}\bm e
    +O(\lVert\bm e\rVert^3).
 \end{equation}
-The linear term \(\lambda\tilde{\thet}^{\top}\bm e\) moves the minimum. To
-quadratic order, its error relative to \(\tilde{\thet}\) satisfies
+The linear term \(\lambda\widetilde{\thet}^{\top}\bm e\) moves the minimum. To
+quadratic order, its error relative to \(\widetilde{\thet}\) satisfies
 \begin{equation}
   (H+\lambda I)\bm e_\lambda^\star
-  =-\lambda\tilde{\thet},
+  =-\lambda\widetilde{\thet},
 \end{equation}
 and hence
 \begin{equation}\label{eq:regularized_error}
   \bm e_\lambda^\star
-  =-\lambda(H+\lambda I)^{-1}\tilde{\thet}.
+  =-\lambda(H+\lambda I)^{-1}\widetilde{\thet}.
 \end{equation}
 The corresponding parameter is
 \begin{equation}\label{eq:regularized_minimizer}
   \thet_\lambda^\star
-  =(H+\lambda I)^{-1}H\tilde{\thet}.
+  =(H+\lambda I)^{-1}H\widetilde{\thet}.
 \end{equation}
 If \(Hu_i=h_i u_i\), then along that Hessian eigenvector,
 \begin{equation}
   e_{\lambda,i}^\star
-  =-\frac{\lambda}{h_i+\lambda}\tilde\theta_i,
+  =-\frac{\lambda}{h_i+\lambda}\widetilde\theta_i,
   \qquad
   \theta_{\lambda,i}^\star
-  =\frac{h_i}{h_i+\lambda}\tilde\theta_i.
+  =\frac{h_i}{h_i+\lambda}\widetilde\theta_i.
 \end{equation}
 Thus ordinary weight decay does not directly reduce the distance to the
 unregularized minimum; it introduces a bias toward the chosen parameter
@@ -1003,7 +1003,7 @@ from a local operator with a dispersion relation \(h(k)\).
 Spatial translation \(x\mapsto x+a\) and a shift of the parameter origin
 \(\thet\mapsto\thet+\bm c\) are different symmetries. The norm
 \(\lVert\thet\rVert^2\) is not invariant under the latter, so translational
-invariance cannot replace \(\thet\) by \(\thet-\tilde{\thet}\) in the decay
+invariance cannot replace \(\thet\) by \(\thet-\widetilde{\thet}\) in the decay
 term. Finally, the locality of the quadratic approximation is enforced by a
 small update or a trust region, for example
 \begin{equation}

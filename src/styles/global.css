@@ -908,11 +908,13 @@ a:hover {
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: 0.8rem;
   align-items: center;
+  margin: 1.8rem 0;
   scroll-margin-top: 1.5rem;
 }
 
 .prose .equation-block > .katex-display {
   min-width: 0;
+  margin: 0;
 }
 
 .prose .equation-number {

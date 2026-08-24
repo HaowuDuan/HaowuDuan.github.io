@@ -3,6 +3,7 @@ import katex from "katex";
 
 const mathPattern = /<math\s+display="(inline|block)"[^>]*>[\s\S]*?<annotation encoding="application\/x-tex">([\s\S]*?)<\/annotation>[\s\S]*?<\/math>/g;
 const fallbackMathPattern = /<span\s+class="math (inline|display)">([\s\S]*?)<\/span>/g;
+const proseCharacterPattern = /[\p{L}\p{N}]/u;
 
 function decodeHtml(text) {
   return text
@@ -57,6 +58,15 @@ function normalizeTex(tex) {
     .trim();
 }
 
+function withProseBoundarySpacing(source, offset, matchLength, html) {
+  const previousCharacter = source[offset - 1] ?? '';
+  const nextCharacter = source[offset + matchLength] ?? '';
+  const leadingSpace = proseCharacterPattern.test(previousCharacter) ? ' ' : '';
+  const trailingSpace = proseCharacterPattern.test(nextCharacter) ? ' ' : '';
+
+  return `${leadingSpace}${html}${trailingSpace}`;
+}
+
 async function renderFile(file) {
   const source = normalizePandocFallbackMath(await readFile(file, "utf8"));
   let count = 0;
@@ -76,7 +86,7 @@ async function renderFile(file) {
   });
   let formulaIndex = 0;
 
-  const rendered = source.replace(mathPattern, (_, display, encodedTex) => {
+  const rendered = source.replace(mathPattern, (match, display, encodedTex, offset) => {
     const tex = decodeHtml(encodedTex.trim());
     const renderTex = normalizeTex(tex);
     const equation = metadata[formulaIndex];
@@ -91,10 +101,11 @@ async function renderFile(file) {
         strict: "warn",
         trust: false,
       });
-      if (!equation?.number) return katexHtml;
+      const renderedMath = equation?.number
+        ? `<span class="equation-block"${equation.label ? ` id="${equation.label}"` : ''}>${katexHtml}<span class="equation-number" aria-hidden="true">(${equation.number})</span></span>`
+        : katexHtml;
 
-      const id = equation.label ? ` id="${equation.label}"` : "";
-      return `<span class="equation-block"${id}>${katexHtml}<span class="equation-number" aria-hidden="true">(${equation.number})</span></span>`;
+      return withProseBoundarySpacing(source, offset, match.length, renderedMath);
     } catch (error) {
       throw new Error(`${file}: KaTeX could not render formula ${count}: ${renderTex}`, {
         cause: error,
