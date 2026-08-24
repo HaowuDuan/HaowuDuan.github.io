@@ -41,11 +41,11 @@ from First Principles}}
 \section{One Parameter in a Smooth Loss}
 %======================================================================
 
-Let $\theta\in\R$ be a scalar parameter and let $V(\theta)$ be a twice
-continuously differentiable loss. At iteration $t$, denote the current
-parameter by $\theta_t$, its gradient by $g_t$, the learning rate by
-$\eta_t$, and the parameter displacement by $\Delta\theta_t$. Gradient
-descent takes the step
+Consider a scalar parameter $\theta\in\R$ and a twice continuously
+differentiable loss $V(\theta)$. At iteration $t$, we write $\theta_t$ for
+the current parameter, $g_t$ for its gradient, $\eta_t$ for the learning
+rate, and $\Delta\theta_t$ for the parameter displacement. Gradient descent
+takes the step
 \begin{equation}\label{eq:one_d_gd}
   g_t=V'(\theta_t),
   \qquad
@@ -68,8 +68,8 @@ $\eta_t$ sets the distance.
 
 \paragraph{Global target and local information.}
 
-Choose a global minimizer $\overset{\sim}{\theta}$, and denote the error at iteration
-$t$ by $e_t$ and the curvature at the minimizer by $\overset{\sim}{h}$:
+Choose a global minimizer $\overset{\sim}{\theta}$. The error at iteration
+$t$ is $e_t$, and $\overset{\sim}{h}$ is the curvature at that minimizer:
 \begin{equation}
   \begin{aligned}
     \overset{\sim}{\theta}&\in\arg\min_{\theta\in\R}V(\theta),
@@ -113,10 +113,11 @@ a small displacement $\delta\theta$:
 
 \paragraph{Optimizer, scheduler, and weight decay.}
 
-At iteration $t$, let $\theta_t$ be the current parameter,
-$g_t=V'(\theta_t)$ the task gradient, $\mathcal O_t(g_0,\ldots,g_t)$ the
-update direction produced by the optimizer, $\eta_t>0$ the learning rate
-supplied by the scheduler, and $\lambda_t\geq0$ the weight-decay coefficient.
+At iteration $t$, $\theta_t$ is the current parameter,
+$g_t=V'(\theta_t)$ is the task gradient, $\mathcal O_t(g_0,\ldots,g_t)$ is
+the update direction produced by the optimizer, $\eta_t>0$ is the learning
+rate supplied by the scheduler, and $\lambda_t\geq0$ is the weight-decay
+coefficient.
 The weight-decay update is
 \begin{equation}\label{eq:optimizer_scheduler_decay}
   \theta_{t+1}
@@ -169,7 +170,7 @@ explicit.
 
 \paragraph{Local transport along the training curve.}
 
-Let $\delta\theta_t$ denote the separation at step $t$ between two runs of
+Write $\delta\theta_t$ for the separation at step $t$ between two runs of
 the same update rule started from nearby initial parameters. Differentiating
 the gradient-descent case of \eqref{eq:optimizer_scheduler_decay} with respect
 to $\theta_t$ gives its evolution to first order,
@@ -182,7 +183,7 @@ neighbouring trajectories are pulled together, which is a weaker statement
 than convergence of either one.
 
 Everything so far has used a single parameter. The rest of this note needs
-several, so denote the full $d$-component parameter vector by $\thet$:
+several. For the full $d$-component parameter vector, we use $\thet$:
 \begin{equation}\label{eq:parameter_vector}
   \thet=(\theta_1,\ldots,\theta_d)\in\R^d
 \end{equation}
@@ -197,10 +198,9 @@ upper--lower pair is summed over; $\theta^\mu$ and $\theta_\mu$ are the same
 $d$ numbers written in the two positions, since the parameter space carries
 the Euclidean metric.
 
-Let $\rho^\mu(t)$ be the parameter trajectory and reserve $\lambda(t)$ for
-the weight-decay coefficient.
-Denote the Hessian evaluated at the current point of the trajectory by
-$H^\mu{}_{\nu}(t)$:
+Use $\rho^\mu(t)$ for the parameter trajectory and reserve $\lambda(t)$ for
+the weight-decay coefficient. The Hessian evaluated at the current point of
+the trajectory is $H^\mu{}_{\nu}(t)$:
 \begin{equation}
   H^\mu{}_{\nu}(t)
   =\left.
@@ -210,7 +210,7 @@ $H^\mu{}_{\nu}(t)$:
 \end{equation}
 Both derivatives act on the parameter coordinates of $V$; $t$ only selects
 the evaluation point $\rho(t)$.
-For discrete updates, write $H_t=\nabla^2V(\thet_t)$ and let $I$ denote the
+For discrete updates, write $H_t=\nabla^2V(\thet_t)$, with $I$ the
 $d\times d$ identity matrix. After $N$ updates, gradient descent with
 decoupled decay transports a tangent displacement according to
 \begin{equation}
@@ -238,9 +238,9 @@ trajectories obeys
     H^\mu{}_{\nu}(t)+\lambda(t)\delta^\mu{}_{\nu}
   \right]\delta\theta^\nu(t),
 \end{equation}
-where $\delta^\mu{}_{\nu}$ is the Kronecker delta. Let $\mathcal P$ denote
-time ordering, with later times multiplying from the left, and let
-$U_\rho(t,0)$ denote the resulting transport operator. The solution is
+where $\delta^\mu{}_{\nu}$ is the Kronecker delta. The symbol $\mathcal P$
+orders later times to the left, and $U_\rho(t,0)$ is the resulting transport
+operator. The solution is
 \begin{equation}\label{eq:path_ordered_transport}
   \begin{aligned}
     \delta\thet(t)&=U_\rho(t,0)\delta\thet(0),\\
@@ -314,8 +314,8 @@ distinctions exact.
 \paragraph{Failure.}
 A single learning rate must be small enough for the sharpest direction of the
 loss, even when that makes progress along flatter directions painfully slow.
-Let $x$ be the stiff coordinate with curvature $h_{\rm stiff}$ and let $y$
-be the soft coordinate with curvature $h_{\rm soft}$. The simplest example
+Use $x$ for the stiff coordinate with curvature $h_{\rm stiff}$ and $y$ for
+the soft coordinate with curvature $h_{\rm soft}$. The simplest example
 is the anisotropic quadratic
 \begin{equation}\label{eq:momentum_anisotropic}
   V(x,y)=\frac12\left(h_{\rm stiff}x^2+h_{\rm soft}y^2\right),
@@ -336,9 +336,9 @@ directions by the same scalar.
 
 \paragraph{Fix: reinforce persistence, cancel oscillation.}
 Momentum does one simple thing: gradients with the same sign add, while
-gradients with alternating signs cancel. Let
-\(\bm g_t\equiv\nabla V(\thet_t)\) be the gradient, let \(\bm v_{t+1}\) be
-the parameter displacement at step \(t\), and let \(\beta\) be the momentum
+gradients with alternating signs cancel. We use
+\(\bm g_t\equiv\nabla V(\thet_t)\) for the gradient, \(\bm v_{t+1}\) for
+the parameter displacement at step \(t\), and \(\beta\) for the momentum
 coefficient. The update is
 \begin{equation}\label{eq:momentum_velocity}
   \bm v_{t+1}=\beta\bm v_t-\eta\bm g_t,
@@ -443,9 +443,8 @@ condition into a quadratic one. The two roots of that quadratic now determine
 the decay.
 
 \paragraph{Exact \(2/3\) example.}
-Take \(h_{\rm stiff}=25\) and \(h_{\rm soft}=1\). Denote the gradient-descent
-multipliers in the two directions by \(r_{\rm stiff}\) and
-\(r_{\rm soft}\):
+Take \(h_{\rm stiff}=25\) and \(h_{\rm soft}=1\). The corresponding
+gradient-descent multipliers are \(r_{\rm stiff}\) and \(r_{\rm soft}\):
 \begin{equation}
   r_{\rm stiff}=1-25\eta,
   \qquad
@@ -645,7 +644,7 @@ matrix \(W\), SGD uses the update \(\Delta W=-\eta G\), so it preserves that
 \(100{:}1\) imbalance.
 
 For a constant \(G\) and negligible \(\epsilon\), Adam normalizes all four
-positive entries separately. Denote its matrix response by \(A\):
+positive entries separately. Call its matrix response \(A\):
 \begin{equation}
   A=\begin{pmatrix}1&1\\1&1\end{pmatrix}.
 \end{equation}
@@ -724,8 +723,8 @@ computing \eqref{eq:svd} explicitly.
 %======================================================================
 
 A learning-rate scheduler cannot correct an update direction; it only changes
-the distance traveled in that direction. At iteration \(t\), let \(\eta_t\)
-denote the learning rate and let \(\eta_{\max}\) denote its peak value. A
+the distance traveled in that direction. At iteration \(t\), \(\eta_t\) is
+the learning rate and \(\eta_{\max}\) its peak value. A
 constant-rate run keeps \(\eta_t=\eta_{\max}\) throughout training. Warm-up
 starts below the peak and raises the rate during the first part of training,
 whereas warm-down lowers the rate during the final part.
@@ -741,10 +740,10 @@ the warm-up and warm-down mechanisms are examined separately.
   reduces late motion.}
   \label{fig:learning_rate_schedule}
 \end{figure}
-For the late-training noise mechanism, consider one noisy quadratic mode. Let
-\(\widehat g_t\) be its minibatch gradient, \(e_t\) its error, \(h_t\) its
-positive curvature, \(\xi_t\) the minibatch noise, \(B\) the batch size, and
-\(\sigma_t^2\) the noise scale. First separate signal from noise:
+For the late-training noise mechanism, consider one noisy quadratic mode,
+with minibatch gradient \(\widehat g_t\), error \(e_t\), positive curvature
+\(h_t\), minibatch noise \(\xi_t\), batch size \(B\), and noise scale
+\(\sigma_t^2\). First separate signal from noise:
 \begin{equation}\label{eq:scheduler_gradient}
   \widehat g_t=h_t e_t+\xi_t.
 \end{equation}
@@ -861,7 +860,7 @@ the noise-floor argument for warm-down vanishes with it.
 
 \subsection{Combining the two interventions}
 
-For \(N\) updates indexed by \(t=0,\ldots,N-1\), let \(W<N-1\) be the
+For \(N\) updates indexed by \(t=0,\ldots,N-1\), write \(W<N-1\) for the
 number of updates before the peak. The first branch below is omitted when
 \(W=0\). Starting from \(\eta_{\rm start}\), the schedule reaches the peak
 rate \(\eta_{\max}\) at update \(W\) and the final rate \(\eta_{\min}\) at
@@ -888,9 +887,9 @@ consequence of the quadratic model.
 \section{Weight Decay: Zero-Centered Penalty and Decoupled Damping}\label{sec:weight_decay}
 %======================================================================
 
-Let \(\thet_t\in\R^d\) be the parameter vector at step \(t\), let
-\(g_t=\nabla V(\thet_t)\) be the task gradient, let \(\eta_t>0\) be the
-learning rate, and let \(\lambda_t\geq0\) be the decay coefficient. The role
+\(\thet_t\in\R^d\) is the parameter vector at step \(t\),
+\(g_t=\nabla V(\thet_t)\) is the task gradient, \(\eta_t>0\) is the learning
+rate, and \(\lambda_t\geq0\) is the decay coefficient. The role
 of \(P_t\) is concrete in Adam. Using the bias-corrected second moment
 \(\widehat{\bm s}_t\) defined in Eq.~\eqref{eq:bias_correction}, Adam's
 coordinate-wise preconditioner is
@@ -916,8 +915,8 @@ and therefore replaces the task gradient by
   \overline{g}_t=g_t+\lambda_t\thet_t.
 \end{equation}
 Adam then uses \(\overline{g}_t\), rather than \(g_t\), in both moment recurrences.
-Let \(\widehat{\bm m}_t^{L_2}\) and \(\widehat{\bm s}_t^{L_2}\) denote the
-resulting moments, and let \(P_t^{L_2}\) be constructed from
+Write \(\widehat{\bm m}_t^{L_2}\) and \(\widehat{\bm s}_t^{L_2}\) for the
+resulting moments, and construct \(P_t^{L_2}\) from
 \(\widehat{\bm s}_t^{L_2}\) by Eq.~\eqref{eq:section4_adam_preconditioner}.
 The coupled update is
 \begin{equation}\label{eq:section4_coupled_update}
@@ -938,8 +937,9 @@ the decay outside them.
 
 \subsection{Coupled decay: distance to the origin is not distance to the minimum}
 
-Let \(\overset{\sim}{\thet}\) be an unregularized local minimum, define the error
-\(\bm e=\thet-\overset{\sim}{\thet}\), and let \(H\) be the Hessian at that minimum.
+Suppose \(\overset{\sim}{\thet}\) is an unregularized local minimum. Define
+the error \(\bm e=\thet-\overset{\sim}{\thet}\), and write \(H\) for the
+Hessian at that minimum.
 Locally,
 \begin{equation}\label{eq:local_quadratic_vector}
   V(\overset{\sim}{\thet}+\bm e)
@@ -1013,8 +1013,8 @@ not by weight decay itself.
 
 \subsection{What overfitting means for weight decay}
 
-Let \(\widehat V_N\) be the empirical loss on \(N\) training examples and
-let \(V_{\rm pop}\) be the population loss on a fresh example drawn from the
+Write \(\widehat V_N\) for the empirical loss on \(N\) training examples and
+\(V_{\rm pop}\) for the population loss on a fresh example drawn from the
 same distribution:
 \begin{equation}
   \widehat V_N(\thet)
@@ -1054,7 +1054,7 @@ Thus regularization is not the claim that a smaller norm is intrinsically
 better; it is the claim that accepting a slightly worse fit to the observed
 sample can improve prediction on a new sample.
 
-The mechanism is explicit in linear regression. Let
+The mechanism is explicit in the linear-regression model
 \begin{equation}
   \bm y=X\thet_\star+\bm\varepsilon,
   \qquad
@@ -1062,7 +1062,7 @@ The mechanism is explicit in linear regression. Let
   \qquad
   \operatorname{Cov}(\bm\varepsilon)=\sigma^2I,
 \end{equation}
-and define the empirical curvature matrix
+The empirical curvature matrix is
 \begin{equation}
   A=\frac1N X^\top X.
 \end{equation}
@@ -1071,8 +1071,8 @@ For squared loss, the weight-decayed estimator is
   \widehat{\thet}_\lambda
   =(A+\lambda I)^{-1}\frac{X^\top\bm y}{N}.
 \end{equation}
-Let \(Au_i=s_i u_i\), and denote components along \(u_i\) by a subscript
-\(i\). The estimator in that direction is
+Choose eigenvectors satisfying \(Au_i=s_i u_i\). Components along \(u_i\)
+carry the subscript \(i\). The estimator in that direction is
 \begin{equation}\label{eq:ridge_mode_estimator}
   \widehat\theta_{\lambda,i}
   =\frac{s_i}{s_i+\lambda}\theta_{\star,i}
