@@ -12,6 +12,10 @@ cp ../note_drafts/optimization_techniques/fig_learning_rate_schedule.png assets/
 cp ../note_drafts/optimization_techniques/fig_learning_rate_warmup.png assets/optimization/fig_learning_rate_warmup.png
 cp ../note_drafts/optimization_techniques/fig_learning_rate_warmdown.png assets/optimization/fig_learning_rate_warmdown.png
 
+node render-architecture-figures.mjs \
+  ../note_drafts/attention_moe/attention_moe.tex \
+  assets/architecture
+
 mkdir -p vendor/katex/fonts
 cp ../node_modules/katex/dist/katex.min.css vendor/katex/katex.min.css
 cp ../node_modules/katex/dist/fonts/* vendor/katex/fonts/
@@ -68,4 +72,17 @@ node prepare-optimization-note.mjs \
   llm-optimization.html \
   ../note_drafts/optimization_techniques/optimization_techniques.tex
 
-node render-katex.mjs article.html notes.html diffusion-notes.html llm-optimization.html
+pandoc ../note_drafts/attention_moe/attention_moe.tex \
+  --from=latex \
+  --to=html5 \
+  --mathml \
+  --toc \
+  --toc-depth=3 \
+  --shift-heading-level-by=1 \
+  --citeproc \
+  --bibliography=../note_drafts/attention_moe/references.bib \
+  --template=architecture-notes-template.html \
+  --output=modern-llm-architecture.html
+node prepare-architecture-note.mjs modern-llm-architecture.html
+
+node render-katex.mjs article.html notes.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html

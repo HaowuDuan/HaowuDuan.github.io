@@ -18,6 +18,8 @@ const diffusionBody = (await extractArticle('diffusion-notes.html'))
   .replaceAll('assets/diffusion-distribution-paths.svg', '/notes/diffusion-distribution-paths.svg');
 const optimizationBody = (await extractArticle('llm-optimization.html'))
   .replaceAll('assets/optimization/', '/notes/optimization/');
+const architectureBody = (await extractArticle('modern-llm-architecture.html'))
+  .replaceAll('assets/architecture/', '/notes/architecture/');
 
 const diffusionFrontmatter = `---
 title: Diffusion Models and Path Integrals
@@ -54,6 +56,21 @@ sections:
     label: "2.4"
 ---`;
 
+const architectureFrontmatter = `---
+title: Modern LLM Architecture
+order: 1
+chapterNumber: 1
+math: true
+description: Attention, normalization, and sparse mixture-of-experts layers in decoder-only Transformers
+sections:
+  - title: Attention
+    id: attention
+    label: "1.1"
+  - title: Mixture of Experts
+    id: mixture-of-experts
+    label: "1.2"
+---`;
+
 await Promise.all([
   writeFile(
     resolve(repositoryRoot, 'src/content/diffusion-notes/diffusion-models-and-path-integrals.md'),
@@ -63,7 +80,12 @@ await Promise.all([
     resolve(repositoryRoot, 'src/content/llm-notes/conceptual-introduction-to-training.md'),
     `${optimizationFrontmatter}\n\n${optimizationBody}\n`,
   ),
+  writeFile(
+    resolve(repositoryRoot, 'src/content/llm-notes/modern-llm-architecture.md'),
+    `${architectureFrontmatter}\n\n${architectureBody}\n`,
+  ),
   mkdir(resolve(repositoryRoot, 'public/notes/optimization'), { recursive: true }),
+  mkdir(resolve(repositoryRoot, 'public/notes/architecture'), { recursive: true }),
 ]);
 
 await Promise.all([
@@ -83,6 +105,21 @@ await Promise.all([
       resolve(repositoryRoot, 'public/notes/optimization', filename),
     ),
   ),
+  ...[
+    'token-lattice.svg',
+    'decoder-block-dataflow.svg',
+    'gqa-example.svg',
+    'norm-placement.svg',
+    'norm-depth-stack.svg',
+    'dense-versus-moe.svg',
+    'swiglu-expert.svg',
+    'moe-topk-example.svg',
+  ].map(filename =>
+    copyFile(
+      resolve(previewDirectory, 'assets/architecture', filename),
+      resolve(repositoryRoot, 'public/notes/architecture', filename),
+    ),
+  ),
 ]);
 
-process.stdout.write('Exported the validated diffusion and conceptual training previews to Astro content.\n');
+process.stdout.write('Exported the validated diffusion, architecture, and conceptual training previews to Astro content.\n');

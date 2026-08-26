@@ -916,11 +916,22 @@ a:hover {
 }
 
 .prose .equation-block {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: 0.8rem;
   align-items: center;
   margin: 1.8rem 0;
+  scroll-margin-top: 1.5rem;
+}
+
+.prose .equation-block-multiline {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.prose .equation-anchor {
+  position: absolute;
+  inset-block-start: 0;
   scroll-margin-top: 1.5rem;
 }
 
