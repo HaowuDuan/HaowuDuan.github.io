@@ -1,9 +1,9 @@
 ---
-title: LLM Training
+title: Conceptual Introduction to Training
 order: 2
 chapterNumber: 2
 math: true
-description: Optimizers, schedulers, and weight decay from first principles
+description: Optimizers, learning-rate schedules, and weight decay from first principles
 sections:
   - title: Overview
     id: one-parameter-in-a-smooth-loss

@@ -34,11 +34,11 @@ sections:
 ---`;
 
 const optimizationFrontmatter = `---
-title: LLM Training
+title: Conceptual Introduction to Training
 order: 2
 chapterNumber: 2
 math: true
-description: Optimizers, schedulers, and weight decay from first principles
+description: Optimizers, learning-rate schedules, and weight decay from first principles
 sections:
   - title: Overview
     id: one-parameter-in-a-smooth-loss
@@ -60,7 +60,7 @@ await Promise.all([
     `${diffusionFrontmatter}\n\n${diffusionBody}\n`,
   ),
   writeFile(
-    resolve(repositoryRoot, 'src/content/llm-notes/llm-training.md'),
+    resolve(repositoryRoot, 'src/content/llm-notes/conceptual-introduction-to-training.md'),
     `${optimizationFrontmatter}\n\n${optimizationBody}\n`,
   ),
   mkdir(resolve(repositoryRoot, 'public/notes/optimization'), { recursive: true }),
@@ -85,4 +85,4 @@ await Promise.all([
   ),
 ]);
 
-process.stdout.write('Exported the validated diffusion and LLM training previews to Astro content.\n');
+process.stdout.write('Exported the validated diffusion and conceptual training previews to Astro content.\n');

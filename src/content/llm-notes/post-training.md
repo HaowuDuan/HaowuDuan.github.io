@@ -1,7 +1,7 @@
 ---
-title: Post-training
-order: 4
-chapterNumber: 4
+title: Post-Training
+order: 6
+chapterNumber: 6
 status: todo
 description: Methods for adapting and aligning pretrained language models
 ---
