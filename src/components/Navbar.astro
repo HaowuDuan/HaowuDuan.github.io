@@ -9,12 +9,12 @@ const navItems = [
   { label: 'CV', href: '/cv/' },
 ];
 const notesItems = [
-  { label: 'LLM', href: '/llm-book/' },
-  { label: 'Diffusion Models', href: '/diffusion-models/' },
-  { label: 'Reinforcement Learning', href: '/reinforcement-learning/' },
-  { label: 'GPUs', href: '/gpus/' },
+  { label: 'LLM', basePath: '/llm-book/', href: '/llm-book/introduction/' },
+  { label: 'Diffusion Models', basePath: '/diffusion-models/', href: '/diffusion-models/diffusion-models-and-path-integrals/' },
+  { label: 'Reinforcement Learning', basePath: '/reinforcement-learning/', href: '/reinforcement-learning/introduction/' },
+  { label: 'GPUs', basePath: '/gpus/', href: '/gpus/introduction/' },
 ];
-const isNotesActive = notesItems.some(n => currentPath.startsWith(n.href));
+const isNotesActive = notesItems.some(item => currentPath.startsWith(item.basePath));
 ---
 
 <header class="site-header">
@@ -26,7 +26,7 @@ const isNotesActive = notesItems.some(n => currentPath.startsWith(n.href));
           {item.label}
         </a>
       ))}
-      <a href="/llm-book/" aria-current={isNotesActive ? 'page' : undefined}>notes</a>
+      <a href={notesItems[0].href} aria-current={isNotesActive ? 'page' : undefined}>notes</a>
       <button id="theme-toggle" aria-label="Toggle color theme" class="theme-button" title="Toggle color theme">◐</button>
     </nav>
   </div>
@@ -34,7 +34,7 @@ const isNotesActive = notesItems.some(n => currentPath.startsWith(n.href));
     <nav class="notes-subnav" aria-label="Note collections">
       <div class="notes-subnav__inner">
         {notesItems.map(item => (
-          <a href={item.href} aria-current={currentPath.startsWith(item.href) ? 'page' : undefined}>
+          <a href={item.href} aria-current={currentPath.startsWith(item.basePath) ? 'page' : undefined}>
             {item.label}
           </a>
         ))}

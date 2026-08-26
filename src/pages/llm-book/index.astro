@@ -3,6 +3,9 @@ import NotesIndex from '../../components/NotesIndex.astro';
 import { getNotes } from '../../lib/notes';
 
 const chapters = await getNotes('llm-notes');
+if (chapters.length > 0) {
+  return Astro.redirect(`/llm-book/${chapters[0].id}/`);
+}
 ---
 
 <NotesIndex

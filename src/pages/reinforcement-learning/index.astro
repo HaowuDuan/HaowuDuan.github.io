@@ -3,6 +3,9 @@ import NotesIndex from '../../components/NotesIndex.astro';
 import { getNotes } from '../../lib/notes';
 
 const chapters = await getNotes('rl-notes');
+if (chapters.length > 0) {
+  return Astro.redirect(`/reinforcement-learning/${chapters[0].id}/`);
+}
 ---
 
 <NotesIndex
