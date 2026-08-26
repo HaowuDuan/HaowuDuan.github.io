@@ -6,10 +6,12 @@ interface Chapter {
   slug: string;
   url: string;
   label?: string;
+  status?: 'finished' | 'todo';
   sections?: Array<{
     title: string;
     id: string;
     label?: string;
+    status?: 'finished' | 'todo';
   }>;
 }
 
@@ -39,14 +41,14 @@ const currentChapter = chapters[chapterIndex];
       <ol class="chapter-list">
         {chapters.map((chapter, index) => (
           <li>
-            <a href={chapter.url} aria-current={isCurrent(chapter.url) ? 'page' : undefined}>
+            <a href={chapter.url} data-status={chapter.status ?? 'finished'} aria-current={isCurrent(chapter.url) ? 'page' : undefined}>
               {chapter.label ?? chapter.title}
             </a>
             {isCurrent(chapter.url) && (chapter.sections?.length ?? 0) > 0 && (
               <ol class="chapter-sublist" data-article-toc>
                 {chapter.sections?.map(section => (
                   <li>
-                    <a href={`#${section.id}`}>
+                    <a href={`#${section.id}`} data-status={section.status ?? 'finished'}>
                       {section.label ? `${section.label} ` : ''}{section.title}
                     </a>
                   </li>
@@ -64,14 +66,14 @@ const currentChapter = chapters[chapterIndex];
         <ol class="chapter-list">
           {chapters.map(chapter => (
             <li>
-              <a href={chapter.url} aria-current={isCurrent(chapter.url) ? 'page' : undefined}>
+              <a href={chapter.url} data-status={chapter.status ?? 'finished'} aria-current={isCurrent(chapter.url) ? 'page' : undefined}>
                 {chapter.label ?? chapter.title}
               </a>
               {isCurrent(chapter.url) && (chapter.sections?.length ?? 0) > 0 && (
                 <ol class="chapter-sublist" data-article-toc>
                   {chapter.sections?.map(section => (
                     <li>
-                      <a href={`#${section.id}`}>
+                      <a href={`#${section.id}`} data-status={section.status ?? 'finished'}>
                         {section.label ? `${section.label} ` : ''}{section.title}
                       </a>
                     </li>

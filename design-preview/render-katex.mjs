@@ -96,7 +96,7 @@ async function renderFile(file) {
     try {
       const katexHtml = katex.renderToString(renderTex, {
         displayMode: display === "block",
-        output: "htmlAndMathml",
+        output: "html",
         throwOnError: true,
         strict: "warn",
         trust: false,

@@ -11,7 +11,7 @@ export default defineConfig({
   markdown: {
     processor: unified({
       remarkPlugins: [remarkMath],
-      rehypePlugins: [rehypeKatex],
+      rehypePlugins: [[rehypeKatex, { output: 'html' }]],
     }),
   },
 });

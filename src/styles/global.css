@@ -348,6 +348,16 @@ a:hover {
   color: var(--link);
 }
 
+.editorial-list li[data-status="todo"] .date,
+.editorial-list li[data-status="todo"] h3 a,
+.editorial-list li[data-status="todo"] p {
+  color: var(--faint);
+}
+
+.editorial-list li[data-status="todo"] h3 {
+  font-weight: 400;
+}
+
 .editorial-list .planned-entry h3 {
   color: var(--ink-strong);
 }
@@ -578,7 +588,7 @@ a:hover {
 .article-deck {
   max-width: 55ch;
   margin: 1.5rem 0 0;
-  color: var(--muted);
+  color: var(--ink-strong);
   font-family: var(--reading);
   font-size: 1.18rem;
   line-height: 1.55;
@@ -1054,7 +1064,8 @@ a:hover {
   display: block;
   margin-left: -0.65rem;
   padding: 0.38rem 0 0.38rem 0.65rem;
-  color: var(--muted);
+  color: var(--ink-strong);
+  font-weight: 650;
   text-decoration: none;
 }
 
@@ -1068,6 +1079,11 @@ a:hover {
   font-weight: 650;
 }
 
+.chapter-list a[data-status="todo"] {
+  color: var(--faint);
+  font-weight: 400;
+}
+
 .chapter-sublist {
   margin: 0.05rem 0 0.35rem;
   padding: 0;
@@ -1077,8 +1093,20 @@ a:hover {
 .chapter-list .chapter-sublist a {
   margin-left: 0.45rem;
   padding-block: 0.28rem;
-  color: var(--faint);
+  color: var(--ink-strong);
   font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.chapter-list .chapter-sublist a:hover,
+.chapter-list .chapter-sublist a[aria-current="location"] {
+  color: var(--ink-strong);
+  font-weight: 650;
+}
+
+.chapter-list .chapter-sublist a[data-status="todo"] {
+  color: var(--faint);
+  font-weight: 400;
 }
 
 .book-mobile-nav {

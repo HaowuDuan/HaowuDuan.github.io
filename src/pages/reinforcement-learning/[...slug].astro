@@ -12,7 +12,14 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 
 const sorted = await getNotes('rl-notes');
-const chapters = sorted.map(ch => ({ title: ch.data.title, slug: ch.id, url: `/reinforcement-learning/${ch.id}/` }));
+const chapters = sorted.map(ch => ({
+  title: ch.data.title,
+  slug: ch.id,
+  url: `/reinforcement-learning/${ch.id}/`,
+  label: ch.data.chapterNumber ? `${ch.data.chapterNumber}. ${ch.data.title}` : ch.data.title,
+  status: ch.data.status,
+  sections: ch.data.sections,
+}));
 const idx = sorted.findIndex(ch => ch.id === entry.id);
 const prevChapter = idx > 0 ? { title: sorted[idx - 1].data.title, url: `/reinforcement-learning/${sorted[idx - 1].id}/` } : null;
 const nextChapter = idx < sorted.length - 1 ? { title: sorted[idx + 1].data.title, url: `/reinforcement-learning/${sorted[idx + 1].id}/` } : null;

@@ -13,15 +13,14 @@ try {
 const selectedPublications = getPublications().filter(publication => publication.selected).slice(0, 3);
 ---
 
-<Base title="Haowu Duan" description="Theoretical physicist and machine-learning researcher working on high-energy QCD and technical computing.">
+<Base title="Haowu Duan" description="Physicist and machine-learning researcher working on high-energy QCD and technical computing.">
   <div class="page-shell home">
     <section class="identity" aria-labelledby="name">
-      <p class="eyebrow">Theoretical physics · Machine learning</p>
+      <p class="eyebrow">Physics · Machine learning</p>
       <h1 id="name">Haowu Duan</h1>
-      <p class="role">Theoretical physicist and machine-learning researcher.</p>
+      <p class="role">Physicist and machine-learning researcher.</p>
       <div class="bio">
-        <p>I am a theoretical high-energy physicist with a PhD from NC State and postdoctoral experience at UConn. My research background is in QCD at small Bjorken-x—the Color Glass Condensate, JIMWLK/BK evolution, and dipole phenomenology.</p>
-        <p>I am interested in understanding deep-learning systems through the lens of statistical mechanics and field theory, and in applying machine learning to problems in non-perturbative QCD.</p>
+        <p>I am a high-energy physicist with a PhD from NC State and postdoctoral experience at UConn. I have experience with GPU simulation, CUDA optimization, and neural network training, and I am familiar with PyTorch.</p>
       </div>
       <div class="contact-links" aria-label="Contact and profiles">
         <a href="mailto:hwdcgc@gmail.com">Email</a>
@@ -29,6 +28,26 @@ const selectedPublications = getPublications().filter(publication => publication
         <a href="https://inspirehep.net/authors/2036679" target="_blank" rel="noopener">InspireHEP</a>
         <a href="https://scholar.google.com/citations?user=qc6CJjYAAAAJ" target="_blank" rel="noopener">Google Scholar</a>
       </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="notes-heading">
+      <div class="home-section__heading">
+        <h2 id="notes-heading">Technical notes</h2>
+      </div>
+      <ol class="editorial-list">
+        <li>
+          <span class="date">LLMs</span>
+          <div>
+            <h3><a href="/llm-book/llm-training/">LLM Training</a></h3>
+          </div>
+        </li>
+        <li>
+          <span class="date">Diffusion</span>
+          <div>
+            <h3><a href="/diffusion-models/diffusion-models-and-path-integrals/">Diffusion Models and Path Integrals</a></h3>
+          </div>
+        </li>
+      </ol>
     </section>
 
     {posts.length > 0 && (
@@ -54,6 +73,19 @@ const selectedPublications = getPublications().filter(publication => publication
       </section>
     )}
 
+    <section class="home-section" aria-labelledby="position-heading">
+      <div class="home-section__heading"><h2 id="position-heading">Current position</h2></div>
+      <ol class="editorial-list">
+        <li>
+          <span class="date">2023–present</span>
+          <div>
+            <h3>Postdoctoral Researcher</h3>
+            <p>Department of Physics, University of Connecticut · Storrs, Connecticut.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
     <section class="home-section" aria-labelledby="research-heading">
       <div class="home-section__heading">
         <h2 id="research-heading">Selected research</h2>
@@ -73,32 +105,6 @@ const selectedPublications = getPublications().filter(publication => publication
             </div>
           </li>
         ))}
-      </ol>
-    </section>
-
-    <section class="home-section" aria-labelledby="projects-heading">
-      <div class="home-section__heading"><h2 id="projects-heading">Projects</h2></div>
-      <ol class="editorial-list">
-        <li>
-          <span class="date">In progress</span>
-          <div>
-            <h3>Technical notes</h3>
-            <p>Long-form notes on large language models, diffusion models, reinforcement learning, and GPU programming.</p>
-          </div>
-        </li>
-      </ol>
-    </section>
-
-    <section class="home-section" aria-labelledby="position-heading">
-      <div class="home-section__heading"><h2 id="position-heading">Current position</h2></div>
-      <ol class="editorial-list">
-        <li>
-          <span class="date">2023–present</span>
-          <div>
-            <h3>Postdoctoral Researcher</h3>
-            <p>Department of Physics, University of Connecticut · Storrs, Connecticut.</p>
-          </div>
-        </li>
       </ol>
     </section>
   </div>

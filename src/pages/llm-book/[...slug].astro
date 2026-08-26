@@ -17,6 +17,7 @@ const chapters = sorted.map(ch => ({
   slug: ch.id,
   url: `/llm-book/${ch.id}/`,
   label: ch.data.chapterNumber ? `${ch.data.chapterNumber}. ${ch.data.title}` : ch.data.title,
+  status: ch.data.status,
   sections: ch.data.sections,
 }));
 const idx = sorted.findIndex(ch => ch.id === entry.id);
