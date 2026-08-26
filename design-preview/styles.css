@@ -1095,6 +1095,15 @@ a:hover {
   font-weight: 400;
 }
 
+.chapter-list .disabled {
+  display: block;
+  padding: 0.26rem 0;
+  color: var(--faint);
+  font-family: var(--ui);
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
 .chapter-sublist {
   margin: 0.05rem 0 0.35rem;
   padding: 0;

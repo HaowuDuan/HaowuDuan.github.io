@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Introduction — LLM Notes — Design Preview</title>
+    <title>Preface — LLM Notes — Design Preview</title>
     <link rel="stylesheet" href="vendor/katex/katex.min.css">
     <link rel="stylesheet" href="styles.css">
     <script defer src="preview.js"></script>
@@ -38,82 +38,56 @@
       <aside class="book-sidebar" aria-label="Book navigation">
         <h2>LLM Notes</h2>
         <ol class="chapter-list">
-          <li><a href="notes.html" aria-current="page">Introduction</a></li>
-          <li><a href="#modern-llm-architecture">1. Modern LLM Architecture</a></li>
+          <li><a href="notes.html" data-status="finished" aria-current="page">Preface</a></li>
+          <li><a href="modern-llm-architecture.html#attention" data-status="finished">1. Modern LLM Architecture</a></li>
+          <li><a href="llm-optimization.html#one-parameter-in-a-smooth-loss" data-status="finished">2. Conceptual Introduction to Training</a></li>
+          <li><span class="disabled">3. nanoGPT Training Deep Dive</span></li>
           <li>
-            <a href="llm-optimization.html#one-parameter-in-a-smooth-loss">2. LLM Training</a>
+            <span class="disabled">4. Making Everything Faster</span>
             <ol class="chapter-sublist">
-              <li><a href="llm-optimization.html#one-parameter-in-a-smooth-loss">2.1 Overview</a></li>
-              <li><a href="llm-optimization.html#three-failure-modes-three-optimizers">2.2 Optimizer</a></li>
-              <li><a href="llm-optimization.html#learning-rate-schedules-why-warm-up-and-warm-down">2.3 Scheduler</a></li>
-              <li><a href="llm-optimization.html#sec:weight_decay">2.4 Weight Decay</a></li>
+              <li><span class="disabled">4.1 FlashAttention</span></li>
+              <li><span class="disabled">4.2 Custom Kernels</span></li>
             </ol>
           </li>
-          <li><a href="#parallelism">3. Parallelism</a></li>
-          <li><a href="#post-training">4. Post-training</a></li>
+          <li><span class="disabled">5. Fine-Tuning</span></li>
+          <li><span class="disabled">6. Post-Training</span></li>
+          <li><span class="disabled">7. Inference</span></li>
         </ol>
       </aside>
 
       <div class="note-content">
         <details class="book-mobile-nav">
-          <summary>Chapters · Introduction</summary>
+          <summary>Chapters · Preface</summary>
           <ol class="chapter-list">
-            <li><a href="notes.html" aria-current="page">Introduction</a></li>
-            <li><a href="#modern-llm-architecture">1. Modern LLM Architecture</a></li>
+            <li><a href="notes.html" data-status="finished" aria-current="page">Preface</a></li>
+            <li><a href="modern-llm-architecture.html#attention" data-status="finished">1. Modern LLM Architecture</a></li>
+            <li><a href="llm-optimization.html#one-parameter-in-a-smooth-loss" data-status="finished">2. Conceptual Introduction to Training</a></li>
+            <li><span class="disabled">3. nanoGPT Training Deep Dive</span></li>
             <li>
-              <a href="llm-optimization.html#one-parameter-in-a-smooth-loss">2. LLM Training</a>
+              <span class="disabled">4. Making Everything Faster</span>
               <ol class="chapter-sublist">
-                <li><a href="llm-optimization.html#one-parameter-in-a-smooth-loss">2.1 Overview</a></li>
-                <li><a href="llm-optimization.html#three-failure-modes-three-optimizers">2.2 Optimizer</a></li>
-                <li><a href="llm-optimization.html#learning-rate-schedules-why-warm-up-and-warm-down">2.3 Scheduler</a></li>
-                <li><a href="llm-optimization.html#sec:weight_decay">2.4 Weight Decay</a></li>
+                <li><span class="disabled">4.1 FlashAttention</span></li>
+                <li><span class="disabled">4.2 Custom Kernels</span></li>
               </ol>
             </li>
-            <li><a href="#parallelism">3. Parallelism</a></li>
-            <li><a href="#post-training">4. Post-training</a></li>
+            <li><span class="disabled">5. Fine-Tuning</span></li>
+            <li><span class="disabled">6. Post-Training</span></li>
+            <li><span class="disabled">7. Inference</span></li>
           </ol>
         </details>
         <header class="article-header">
-          <p class="eyebrow">LLM Notes · Chapter 1</p>
-          <h1 class="article-title">Introduction</h1>
-          <p class="article-deck">Notes on large language models from a physicist's perspective.</p>
+          <p class="eyebrow">LLM Notes · Preface</p>
+          <h1 class="article-title">Preface</h1>
+          <p class="article-deck">Scope, status, and intended use of these notes.</p>
         </header>
         <article class="prose" data-linked-headings>
           <p>This set of notes is a work in progress. It reflects my latest understanding of large language models and records facts and ideas that I want to revisit whenever I need to refresh my memory. I am writing it primarily for myself, but once the full set is complete, I intend to polish it and make it accessible to a broader audience.</p>
           <p>Comments, corrections, and suggestions are welcome. You can reach me at <a href="mailto:hwdcgc@gmail.com">hwdcgc@gmail.com</a>.</p>
 
-          <h2 id="modern-llm-architecture">1. Modern LLM Architecture</h2>
-          <p>A useful technical note should make its assumptions visible before compressing them into notation. Equations belong in the same reading rhythm as prose rather than inside a visually separate application panel.</p>
-          <p>For a sequence of tokens
-            <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>x</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">x_1,\ldots,x_T</annotation></semantics></math>,
-            an autoregressive model factors the joint distribution as
-          </p>
-          <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>x</mi><mi>T</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><munderover><mo>∏</mo><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow><mi>T</mi></munderover><mi>p</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>x</mi><mi>t</mi></msub><mo>∣</mo><msub><mi>x</mi><mrow><mo>&lt;</mo><mi>t</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">p(x_1,\ldots,x_T)=\prod_{t=1}^{T}p(x_t\mid x_{&lt;t}).</annotation></semantics></math></p>
-
-          <h2 id="llm-training">2. LLM Training</h2>
-          <p>The first draft in this section develops optimizers, learning-rate schedulers, and weight decay from first principles.</p>
-
-          <h3 id="training-overview">2.1 Overview</h3>
-          <p><a href="llm-optimization.html#one-parameter-in-a-smooth-loss">Start with the training overview</a>, which establishes the loss geometry, local transport, and the roles of the optimizer, scheduler, and weight decay.</p>
-
-          <h3 id="optimizer">2.2 Optimizer</h3>
-          <p><a href="llm-optimization.html#three-failure-modes-three-optimizers">Read the optimizer draft</a>, including momentum, Adam, and Muon as responses to distinct failure modes.</p>
-
-          <h3 id="scheduler">2.3 Scheduler</h3>
-          <p><a href="llm-optimization.html#learning-rate-schedules-why-warm-up-and-warm-down">Read the scheduler draft</a>, covering warm-up, warm-down, and their relationship to optimization dynamics.</p>
-
-          <h3 id="weight-decay">2.4 Weight Decay</h3>
-          <p><a href="llm-optimization.html#sec:weight_decay">Read the weight-decay draft</a>, distinguishing zero-centered penalties, generalization, and decoupled damping.</p>
-
-          <h2 id="parallelism">3. Parallelism</h2>
-          <p>This mock chapter is intentionally short. The full article preview is the stress test for code, tables, wide figures, algorithms, and deeply nested technical structure.</p>
-
-          <h2 id="post-training">4. Post-training</h2>
-          <p>This section will cover the methods used to adapt and align a pretrained language model.</p>
         </article>
         <nav class="chapter-footer" aria-label="Chapter navigation">
           <span class="disabled">← Previous</span>
-          <a href="#modern-llm-architecture">Modern LLM Architecture →</a>
+          <a href="modern-llm-architecture.html#attention">Modern LLM Architecture →</a>
         </nav>
       </div>
     </main>
