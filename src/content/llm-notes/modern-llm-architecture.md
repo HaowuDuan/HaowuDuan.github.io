@@ -11,6 +11,10 @@ sections:
   - title: Mixture of Experts
     id: mixture-of-experts
     label: "1.2"
+  - title: Linear Attention and RNN
+    id: linear-attention-and-rnn
+    label: "1.3"
+    status: todo
 ---
 
 <p><strong>Primary resources.</strong> The two major resources are the
@@ -1187,6 +1191,8 @@ and
 <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0528em;">β</span></span></span></span>
 control the strengths of the balance loss and the
 <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.044em;">z</span></span></span></span>-loss.</p>
+<h2 id="linear-attention-and-rnn">Linear Attention and RNN</h2>
+<p>Coming soon.</p>
 <section class="references" aria-labelledby="architecture-references-heading">
 <h2 id="architecture-references-heading">References</h2>
 <ol>

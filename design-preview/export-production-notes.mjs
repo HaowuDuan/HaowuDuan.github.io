@@ -69,6 +69,10 @@ sections:
   - title: Mixture of Experts
     id: mixture-of-experts
     label: "1.2"
+  - title: Linear Attention and RNN
+    id: linear-attention-and-rnn
+    label: "1.3"
+    status: todo
 ---`;
 
 await Promise.all([
