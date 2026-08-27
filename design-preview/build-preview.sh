@@ -30,6 +30,7 @@ sed '1d' ../drafts/blog1/draft_jimwlk.md | pandoc \
   --output=article.html
 
 cp notes-template.html notes.html
+cp faster-training-template.html faster-training.html
 
 figure_build_dir="$(mktemp -d)"
 test -n "${figure_build_dir:?}"
@@ -85,4 +86,4 @@ pandoc ../note_drafts/attention_moe/attention_moe.tex \
   --output=modern-llm-architecture.html
 node prepare-architecture-note.mjs modern-llm-architecture.html
 
-node render-katex.mjs article.html notes.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html
+node render-katex.mjs article.html notes.html faster-training.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html

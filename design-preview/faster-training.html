@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A proposed outline for faster language-model training">
+    <title>Faster Training — LLM Notes — Design Preview</title>
+    <link rel="stylesheet" href="vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="preview.js"></script>
+    <style>
+      .prose .section-subtitle {
+        max-width: 72ch;
+        margin: -0.65rem 0 2rem;
+        color: var(--ink-strong);
+        font-family: var(--reading);
+        font-size: 1.02rem;
+        line-height: 1.65;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="review-bar">Local design review · Faster Training outline · not published</div>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">about</a>
+          <a href="blog.html">blog</a>
+          <a href="publications.html">publications</a>
+          <a href="projects.html">projects</a>
+          <a href="repositories.html">repositories</a>
+          <a href="cv.html">CV</a>
+          <a href="notes.html" aria-current="page">notes</a>
+        </nav>
+      </div>
+    </header>
+
+    <nav class="notes-subnav" aria-label="Note collections">
+      <div class="notes-subnav__inner">
+        <a href="notes.html" aria-current="page">LLM</a>
+        <a href="diffusion-notes.html">Diffusion Models</a>
+        <span>Reinforcement Learning</span>
+        <span>GPUs</span>
+      </div>
+    </nav>
+
+    <main class="page-shell book-layout">
+      <aside class="book-sidebar" aria-label="LLM note contents" data-article-toc>
+        <h2><a href="notes.html">LLM Notes</a></h2>
+        <ol class="chapter-list">
+          <li><a href="notes.html" data-status="finished">Preface</a></li>
+          <li><a href="modern-llm-architecture.html#attention" data-status="finished">1. Modern LLM Architecture</a></li>
+          <li><a href="llm-optimization.html#one-parameter-in-a-smooth-loss" data-status="finished">2. Conceptual Introduction to Training</a></li>
+          <li>
+            <a href="#pipeline-and-systems-efficiency" data-status="todo" aria-current="page">3. Faster Training</a>
+            <ol class="chapter-sublist">
+              <li><a href="#pipeline-and-systems-efficiency" data-status="todo">3.1 Pipeline and Systems Efficiency</a></li>
+              <li><a href="#per-step-compute-efficiency" data-status="todo">3.2 Per-Step Compute Efficiency</a></li>
+              <li><a href="#training-and-model-efficiency" data-status="todo">3.3 Training and Model Efficiency</a></li>
+            </ol>
+          </li>
+          <li><span class="disabled">4. Fine-Tuning</span></li>
+          <li><span class="disabled">5. Post-Training</span></li>
+          <li><span class="disabled">6. Inference</span></li>
+        </ol>
+      </aside>
+
+      <div class="note-content">
+        <details class="book-mobile-nav" data-responsive-details data-article-toc>
+          <summary>Contents · Faster Training</summary>
+          <ol class="chapter-list">
+            <li><a href="#pipeline-and-systems-efficiency" data-status="todo">3.1 Pipeline and Systems Efficiency</a></li>
+            <li><a href="#per-step-compute-efficiency" data-status="todo">3.2 Per-Step Compute Efficiency</a></li>
+            <li><a href="#training-and-model-efficiency" data-status="todo">3.3 Training and Model Efficiency</a></li>
+          </ol>
+        </details>
+
+        <header class="article-header">
+          <p class="eyebrow">LLM Notes · Chapter 3</p>
+          <h1 class="article-title">Faster Training</h1>
+          <p class="article-deck">A systems-to-algorithms view of reducing the wall-clock time needed to reach a training target.</p>
+        </header>
+
+        <article class="prose" data-linked-headings>
+          <p>Useful starting points are Keller Jordan and contributors’ <a href="https://github.com/KellerJordan/modded-nanogpt">modded-nanogpt NanoGPT speedrun</a> and Andrej Karpathy’s <a href="https://www.youtube.com/watch?v=l8pRSuU81PU">“Let’s reproduce GPT-2 (124M)”</a>.</p>
+
+          <h2 id="pipeline-and-systems-efficiency">Pipeline and Systems Efficiency</h2>
+          <p class="section-subtitle">Data loading, preprocessing, shuffling; host-to-device transfer and prefetching; checkpointing, evaluation, startup/compile overhead; distributed-training and hardware logistics.</p>
+
+          <h2 id="per-step-compute-efficiency">Per-Step Compute Efficiency</h2>
+          <p class="section-subtitle">Custom/fused kernels; FlashAttention; <code>torch.compile</code> and CUDA graphs; mixed precision and memory-layout optimizations; optimizer/kernel fusion.</p>
+
+          <h2 id="training-and-model-efficiency">Training and Model Efficiency</h2>
+          <p class="section-subtitle">Hyperparameter schedules; optimizer choices; batch size and sequence-length strategy; architectural changes; anything reducing the number of steps needed to reach the target.</p>
+        </article>
+
+        <nav class="chapter-footer" aria-label="Chapter navigation">
+          <a href="llm-optimization.html">← Conceptual Introduction to Training</a>
+          <span class="disabled chapter-next">Fine-Tuning →</span>
+        </nav>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>Draft note · local preview only</span>
+        <a href="diffusion-notes.html">Diffusion model notes</a>
+      </div>
+    </footer>
+  </body>
+</html>
