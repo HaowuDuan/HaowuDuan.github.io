@@ -1,7 +1,7 @@
 ---
 title: Inference
-order: 7
-chapterNumber: 7
+order: 6
+chapterNumber: 6
 status: todo
 description: Efficient autoregressive decoding, serving, and inference-time optimization
 ---

@@ -1,17 +1,17 @@
 ---
 title: Making Everything Faster
-order: 4
-chapterNumber: 4
+order: 3
+chapterNumber: 3
 status: todo
 description: FlashAttention and custom GPU kernels for faster language-model execution
 sections:
   - title: FlashAttention
     id: flashattention
-    label: "4.1"
+    label: "3.1"
     status: todo
   - title: Custom Kernels
     id: custom-kernels
-    label: "4.2"
+    label: "3.2"
     status: todo
 ---
 
