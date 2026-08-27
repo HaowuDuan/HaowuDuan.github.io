@@ -15,6 +15,8 @@ sections:
     status: todo
 ---
 
+Useful starting points for this chapter are Keller Jordan and contributors' [modded-nanogpt NanoGPT speedrun](https://github.com/KellerJordan/modded-nanogpt) and Andrej Karpathy's [“Let's reproduce GPT-2 (124M)”](https://www.youtube.com/watch?v=l8pRSuU81PU), which includes a from-scratch implementation followed by a training-speed optimization pass.
+
 ## FlashAttention
 
 Coming soon.
