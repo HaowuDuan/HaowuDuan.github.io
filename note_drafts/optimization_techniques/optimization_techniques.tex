@@ -42,10 +42,12 @@ from First Principles}}
 %======================================================================
 
 Consider a scalar parameter $\theta\in\R$ and a twice continuously
-differentiable loss $V(\theta)$. At iteration $t$, we write $\theta_t$ for
-the current parameter, $g_t$ for its gradient, $\eta_t$ for the learning
-rate, and $\Delta\theta_t$ for the parameter displacement. Gradient descent
-takes the step
+differentiable loss $V(\theta)$. Although the loss encountered in actual
+training is noisy, we assume that it is approximately smooth on the scale of
+a single parameter update. At iteration $t$, we write $\theta_t$ for the
+current parameter, $g_t$ for its gradient, $\eta_t$ for the learning rate,
+and $\Delta\theta_t$ for the parameter displacement. Gradient descent takes
+the step
 \begin{equation}\label{eq:one_d_gd}
   g_t=V'(\theta_t),
   \qquad
@@ -53,8 +55,8 @@ takes the step
   \qquad
   \theta_{t+1}=\theta_t+\Delta\theta_t.
 \end{equation}
-For $\eta_t>0$, the sign of $V'(\theta_t)$ gives the direction and
-$\eta_t$ sets the distance.
+For $\eta_t>0$, the sign of $V'(\theta_t)$ gives the direction, while
+$\eta_t$ rescales the update.
 
 \begin{figure}[H]
   \centering
@@ -68,8 +70,9 @@ $\eta_t$ sets the distance.
 
 \paragraph{Global target and local information.}
 
-Choose a global minimizer $\overset{\sim}{\theta}$. The error at iteration
-$t$ is $e_t$, and $\overset{\sim}{h}$ is the curvature at that minimizer:
+Choose $\overset{\sim}{\theta}$ so that $V$ attains its global minimum there.
+The error at time $t$ is $e_t$, and $\overset{\sim}{h}$ is the curvature
+there:
 \begin{equation}
   \begin{aligned}
     \overset{\sim}{\theta}&\in\arg\min_{\theta\in\R}V(\theta),
@@ -96,12 +99,10 @@ $e_t\equiv\theta_t-\overset{\sim}{\theta}$ gives the exact finite-error update
 \begin{equation}\label{eq:error_update}
   e_{t+1}=e_t-\eta_tg_t.
 \end{equation}
-For the iteration to make progress toward the chosen minimizer, we would like
-the error magnitude---the distance $|e_t|$ from $\theta_t$ to
-$\overset{\sim}{\theta}$---to decrease from one step to the next, so that
-$|e_{t+1}|<|e_t|$. However, the algorithm cannot test this desired contraction
-directly. It can evaluate $g_t$ at the current iterate, but it does not know
-$e_t$, because the latter depends on the unknown minimizer $\overset{\sim}{\theta}$.
+We would like $|e_t|$ to decrease from one step to the next, so that
+$|e_{t+1}|<|e_t|$. The algorithm cannot test this contraction directly. It can
+evaluate $g_t$ at the current iterate, but it does not know $e_t$, because
+$\overset{\sim}{\theta}$ is unknown.
 
 The loss geometry available around the current iterate is local. In particular,
 the curvature $h_t$ determines how the gradient changes, to first order, under
@@ -161,11 +162,11 @@ $\overset{\sim}{\theta}$ from both sides:
       -\eta_t\lambda_t\overset{\sim}{\theta}.
   \end{aligned}
 \end{equation}
-Equation~\eqref{eq:error_update_decay} already shows the important point:
+Equation~\eqref{eq:error_update_decay} already shows the important point,
 weight decay acts on \(\theta_t=e_t+\overset{\sim}{\theta}\), not on the error \(e_t\)
-alone. It is centered at the parameter origin, not at the unknown minimizer,
-so it cannot be interpreted as directly keeping the distance to
-\(\overset{\sim}{\theta}\) small. Section~\ref{sec:weight_decay} makes this distinction
+alone. It is centered at the parameter origin, not at
+\(\overset{\sim}{\theta}\), so it does not directly keep \(\theta_t\) close to
+\(\overset{\sim}{\theta}\). Section~\ref{sec:weight_decay} makes this distinction
 explicit.
 
 \paragraph{Local transport along the training curve.}
@@ -260,7 +261,8 @@ Since $\lambda(t)I$ commutes with every Hessian, the propagator factors as
 \end{equation}
 The first factor is weight-decay damping. The ordered factor records how a
 local perturbation changes along the chosen trajectory. Neither factor proves
-that the trajectory approaches the global minimizer.
+that the trajectory approaches a point where the loss attains its global
+minimum.
 
 Figure~\ref{fig:transport} shows both objects on a surface with genuinely
 varying curvature. The valley floor is a parabola, so the Hessian
@@ -335,7 +337,7 @@ remove this simultaneous conflict: at any one step it still multiplies both
 directions by the same scalar.
 
 \paragraph{Fix: reinforce persistence, cancel oscillation.}
-Momentum does one simple thing: gradients with the same sign add, while
+Momentum does one simple thing, gradients with the same sign add, while
 gradients with alternating signs cancel. We use
 \(\bm g_t\equiv\nabla V(\thet_t)\) for the gradient, \(\bm v_{t+1}\) for
 the parameter displacement at step \(t\), and \(\beta\) for the momentum
@@ -429,7 +431,7 @@ Dividing by \(r^{t-1}\) and moving everything to the left gives
   r^2-(1+\beta-\eta h)r+\beta=0.
 \end{equation}
 Each root \(r\) is a possible per-step error multiplier. Its magnitude tells
-how fast that mode shrinks: smaller \(\lvert r\rvert\) means faster decay. Its
+how fast that mode shrinks, smaller \(\lvert r\rvert\) means faster decay. Its
 sign tells whether the error stays on the same side of the minimum
 \((r>0)\) or alternates sides \((r<0)\).
 
@@ -532,10 +534,10 @@ average \eqref{eq:momentum_ema}, with \(\beta\) renamed \(\beta_1\):
   =\beta_1\bm m_{t-1}+(1-\beta_1)\bm g_t,
   \qquad \bm m_0=0.
 \end{equation}
-Thus Adam inherits momentum's temporal filtering: same-sign gradients
+Thus Adam inherits momentum's temporal filtering, same-sign gradients
 reinforce one another and alternating-sign gradients cancel.
 
-Adam then adds the second-moment buffer \(\bm s_t\): a separate running
+Adam then adds the second-moment buffer \(\bm s_t\), a separate running
 scale for every coordinate, with decay coefficient \(\beta_2\):
 \begin{equation}
   \bm s_t
@@ -573,7 +575,7 @@ With numerical stabilizer \(\epsilon>0\), Adam uses the full update
 where division and square root act coordinate by coordinate; the stabilizer
 prevents division by zero.
 
-The construction is now explicit: the numerator is momentum's smoothed,
+The construction is now explicit, the numerator is momentum's smoothed,
 signed direction, and the denominator is Adam's new coordinate-wise
 root-mean-square scale. Adam keeps the acceleration/cancellation mechanism of
 momentum, then prevents a persistently large coordinate from dominating merely
@@ -608,7 +610,7 @@ scale mismatch.
 
 AdamW means Adam with \emph{decoupled weight decay}. It uses the same adaptive
 moments and the same coordinate-wise step as Adam. The only difference is
-where shrinkage is applied: an \(L_2\) penalty enters the gradient and hence
+where shrinkage is applied, an \(L_2\) penalty enters the gradient and hence
 the two moment buffers, whereas AdamW applies weight decay directly to the
 parameters, outside those buffers. Section~\ref{sec:weight_decay} derives the
 difference.
@@ -619,7 +621,7 @@ difference.
 \paragraph{Failure.}
 A matrix has meaningful directions that are combinations of its entries.
 Adam normalizes individual entries; it does not directly normalize those
-matrix directions. The distinction is explicit for the matrix gradient \(G\):
+matrix directions. The distinction is explicit for the matrix gradient \(G\),
 
 \begin{equation}\label{eq:muon_matrix_example}
   G=\frac12\begin{pmatrix}101&99\\99&101\end{pmatrix}.
@@ -656,7 +658,7 @@ Apply this response to the same two directions:
 \end{equation}
 Adam has not merely reduced the \(100{:}1\) imbalance. In this example, its
 entrywise normalization has deleted the difference mode completely. The
-reason is simple: Adam normalized in the entry basis, while the meaningful
+reason is simple, Adam normalized in the entry basis, while the meaningful
 directions are \(\bm q_+\) and \(\bm q_-\).
 
 \paragraph{Fix: normalize matrix modes instead of entries.}
@@ -687,7 +689,7 @@ one, giving the polar factor \(UZ^T\) and matrix update \(\Delta W_t\):
   \Delta W_t=-\eta UZ^T.
 \end{equation}
 The essential contrast is
-now precise: Adam normalizes entries, whereas Muon normalizes singular modes.
+now precise, Adam normalizes entries, whereas Muon normalizes singular modes.
 
 \paragraph{Exact example.}
 For \eqref{eq:muon_matrix_example}, the input and output directions are both
@@ -722,8 +724,8 @@ computing \eqref{eq:svd} explicitly.
 \section{Learning-Rate Schedules: Why Warm-Up and Warm-Down}
 %======================================================================
 
-A learning-rate scheduler cannot correct an update direction; it only changes
-the distance traveled in that direction. At iteration \(t\), \(\eta_t\) is
+A learning-rate scheduler cannot correct an update direction; it only rescales
+the update in that direction. At iteration \(t\), \(\eta_t\) is
 the learning rate and \(\eta_{\max}\) its peak value. A
 constant-rate run keeps \(\eta_t=\eta_{\max}\) throughout training. Warm-up
 starts below the peak and raises the rate during the first part of training,
@@ -833,7 +835,7 @@ while minibatch noise persists.
   \label{fig:learning_rate_warmdown}
 \end{figure}
 
-Figure~\ref{fig:learning_rate_warmdown}(c) shows the accumulated effect: a
+Figure~\ref{fig:learning_rate_warmdown}(c) shows the accumulated effect, a
 constant learning rate sustains a finite cloud, whereas warm-down contracts
 it. Panel (d) follows three noisy updates from the same late-training point on
 a warped basin. Both trajectories use the same sequence of noise perturbations.
@@ -935,7 +937,7 @@ Thus coupled decay changes both Adam moment buffers and the resulting
 preconditioner, whereas AdamW leaves the Adam statistics unchanged and keeps
 the decay outside them.
 
-\subsection{Coupled decay: distance to the origin is not distance to the minimum}
+\subsection{Coupled decay: shrinking parameters does not move directly toward a minimum}
 
 Suppose \(\overset{\sim}{\thet}\) is an unregularized local minimum. Define
 the error \(\bm e=\thet-\overset{\sim}{\thet}\), and write \(H\) for the
@@ -981,7 +983,7 @@ and hence
   =-\lambda(H+\lambda I)^{-1}\overset{\sim}{\thet}.
 \end{equation}
 The corresponding parameter is
-\begin{equation}\label{eq:regularized_minimizer}
+\begin{equation}\label{eq:regularized_parameter}
   \thet_\lambda^\star
   =(H+\lambda I)^{-1}H\overset{\sim}{\thet}.
 \end{equation}
@@ -993,7 +995,7 @@ If \(Hu_i=h_i u_i\), then along that Hessian eigenvector,
   \theta_{\lambda,i}^\star
   =\frac{h_i}{h_i+\lambda}\overset{\sim}{\theta}_i.
 \end{equation}
-Thus ordinary weight decay does not directly reduce the distance to the
+Thus ordinary weight decay does not directly move the parameters toward the
 unregularized minimum; it introduces a bias toward the chosen parameter
 origin. The displacement is largest in soft Hessian directions with
 \(h_i\ll\lambda\). These are parameter-space directions, not wavelengths.
@@ -1032,7 +1034,7 @@ The generalization gap is
   =V_{\rm pop}(\thet)-\widehat V_N(\thet).
 \end{equation}
 Overfitting means that the fitted parameters follow fluctuations specific to
-the finite training sample: the empirical loss decreases, but the population
+the finite training sample, the empirical loss decreases, but the population
 loss does not. Weight decay succeeds as a regularizer when
 \begin{equation}\label{eq:weight_decay_generalization_test}
   V_{\rm pop}(\widehat{\thet}_\lambda)
@@ -1138,7 +1140,7 @@ When \(|\eta_t\lambda_t|\ll1\), this product becomes
   \exp\!\left(-\sum_{t<T}\eta_t\lambda_t\right)\theta_0.
 \end{equation}
 The accumulated quantity \(\sum_t\eta_t\lambda_t\) is therefore the damping
-budget: it controls the total contraction produced by direct decay. The
+budget, it controls the total contraction produced by direct decay. The
 learning-rate schedule and the decay schedule cannot be interpreted
 independently, because only their product enters this contraction.
 
@@ -1156,7 +1158,7 @@ objective.
 
 \paragraph{Practical choice.}
 
-The bias--variance calculation above describes coupled \(L_2\): it is the
+The bias--variance calculation above describes coupled \(L_2\), it is the
 correct choice when \(\lambda\) is intended to be the coefficient of the
 specific objective
 \(V_\lambda=V+\lambda\lVert\thet\rVert^2/2\). For plain gradient descent,
