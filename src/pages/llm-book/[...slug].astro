@@ -16,7 +16,11 @@ const chapters = sorted.map(ch => ({
   title: ch.data.title,
   slug: ch.id,
   url: `/llm-book/${ch.id}/`,
-  label: ch.data.chapterNumber ? `${ch.data.chapterNumber}. ${ch.data.title}` : ch.data.title,
+  label: ch.data.appendixLetter
+    ? `Appendix ${ch.data.appendixLetter}. ${ch.data.title}`
+    : ch.data.chapterNumber
+      ? `${ch.data.chapterNumber}. ${ch.data.title}`
+      : ch.data.title,
   status: ch.data.status,
   sections: ch.data.sections,
 }));

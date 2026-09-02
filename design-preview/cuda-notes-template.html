@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="CUDA programming, GPU execution, profiling, and performance limits">
+    <title>CUDA — GPU Notes — Design Preview</title>
+    <link rel="stylesheet" href="vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="preview.js"></script>
+  </head>
+  <body>
+    <div class="review-bar">Local design review · CUDA · not published</div>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">about</a>
+          <a href="blog.html">blog</a>
+          <a href="publications.html">publications</a>
+          <a href="projects.html">projects</a>
+          <a href="repositories.html">repositories</a>
+          <a href="cv.html">CV</a>
+          <a href="notes.html" aria-current="page">notes</a>
+        </nav>
+      </div>
+    </header>
+
+    <nav class="notes-subnav" aria-label="Note collections">
+      <div class="notes-subnav__inner">
+        <a href="notes.html">LLM</a>
+        <a href="diffusion-notes.html">Diffusion Models</a>
+        <span>Reinforcement Learning</span>
+        <a href="cuda-notes.html#gpu-and-cuda" aria-current="page">GPUs</a>
+      </div>
+    </nav>
+
+    <main class="page-shell book-layout">
+      <aside class="book-sidebar" aria-label="GPU note contents" data-article-toc>
+        <h2><a href="cuda-notes.html#gpu-and-cuda">GPU Notes</a></h2>
+        <ol class="chapter-list">
+          <li>
+            <a href="#gpu-and-cuda" data-status="finished" aria-current="page">1. CUDA</a>
+            <ol class="chapter-sublist">
+              <li><a href="#gpu-and-cuda" data-status="finished">1.1 GPU and CUDA</a></li>
+              <li><a href="#array-addition" data-status="finished">1.2 Array Addition</a></li>
+              <li><a href="#sec:gpu-underutilization" data-status="finished">1.3 Performance Limits and Failure Modes</a></li>
+            </ol>
+          </li>
+          <li><span class="disabled">2. Triton</span></li>
+        </ol>
+      </aside>
+
+      <div class="note-content">
+        <details class="book-mobile-nav" data-responsive-details data-article-toc>
+          <summary>Contents · CUDA</summary>
+          <ol class="chapter-list">
+            <li><a href="#gpu-and-cuda" data-status="finished">1.1 GPU and CUDA</a></li>
+            <li><a href="#array-addition" data-status="finished">1.2 Array Addition</a></li>
+            <li><a href="#sec:gpu-underutilization" data-status="finished">1.3 Performance Limits and Failure Modes</a></li>
+          </ol>
+        </details>
+        <header class="article-header">
+          <p class="eyebrow">GPU Notes · CUDA</p>
+          <h1 class="article-title">GPU Computing and CUDA</h1>
+          <p class="article-deck">CUDA programming, GPU execution, profiling, and performance limits.</p>
+        </header>
+        <article class="prose" data-linked-headings>
+$body$
+        </article>
+        <nav class="chapter-footer" aria-label="Chapter navigation">
+          <span class="disabled">← Previous</span>
+          <span class="disabled chapter-next">Triton →</span>
+        </nav>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>Draft note · local preview only</span>
+        <a href="notes.html">LLM notes</a>
+      </div>
+    </footer>
+  </body>
+</html>

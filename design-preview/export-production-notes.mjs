@@ -20,6 +20,8 @@ const optimizationBody = (await extractArticle('llm-optimization.html'))
   .replaceAll('assets/optimization/', '/notes/optimization/');
 const architectureBody = (await extractArticle('modern-llm-architecture.html'))
   .replaceAll('assets/architecture/', '/notes/architecture/');
+const cudaBody = (await extractArticle('cuda-notes.html'))
+  .replaceAll('assets/cuda/', '/notes/cuda/');
 
 const diffusionFrontmatter = `---
 title: Diffusion Models and Path Integrals
@@ -75,6 +77,24 @@ sections:
     status: todo
 ---`;
 
+const cudaFrontmatter = `---
+title: CUDA
+order: 1
+chapterNumber: 1
+math: true
+description: GPU execution, CUDA programming, profiling, and performance limits
+sections:
+  - title: GPU and CUDA
+    id: gpu-and-cuda
+    label: "1.1"
+  - title: Array Addition
+    id: array-addition
+    label: "1.2"
+  - title: Performance Limits and Failure Modes
+    id: "sec:gpu-underutilization"
+    label: "1.3"
+---`;
+
 await Promise.all([
   writeFile(
     resolve(repositoryRoot, 'src/content/diffusion-notes/diffusion-models-and-path-integrals.md'),
@@ -88,8 +108,13 @@ await Promise.all([
     resolve(repositoryRoot, 'src/content/llm-notes/modern-llm-architecture.md'),
     `${architectureFrontmatter}\n\n${architectureBody}\n`,
   ),
+  writeFile(
+    resolve(repositoryRoot, 'src/content/gpu-notes/cuda.md'),
+    `${cudaFrontmatter}\n\n${cudaBody}\n`,
+  ),
   mkdir(resolve(repositoryRoot, 'public/notes/optimization'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/architecture'), { recursive: true }),
+  mkdir(resolve(repositoryRoot, 'public/notes/cuda'), { recursive: true }),
 ]);
 
 await Promise.all([
@@ -124,6 +149,28 @@ await Promise.all([
       resolve(repositoryRoot, 'public/notes/architecture', filename),
     ),
   ),
+  ...[
+    'atomic-contention.svg',
+    'bandwidth-fusion.svg',
+    'cpu-gpu-interaction.svg',
+    'cuda-index-1d.svg',
+    'cuda-index-2d.svg',
+    'cuda-programming-model.svg',
+    'latency-hiding.svg',
+    'launch-overhead.svg',
+    'nvidia-ga100-full-gpu.png',
+    'nvidia-ga100-sm.png',
+    'rtx3090-roofline.png',
+    'transfer-bound.svg',
+    'transpose-tile-map.svg',
+    'unified-memory.svg',
+    'warp-divergence.svg',
+  ].map(filename =>
+    copyFile(
+      resolve(previewDirectory, 'assets/cuda', filename),
+      resolve(repositoryRoot, 'public/notes/cuda', filename),
+    ),
+  ),
 ]);
 
-process.stdout.write('Exported the validated diffusion, architecture, and conceptual training previews to Astro content.\n');
+process.stdout.write('Exported the validated diffusion, architecture, conceptual training, and CUDA previews to Astro content.\n');

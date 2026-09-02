@@ -11,6 +11,14 @@ cp ../note_drafts/optimization_techniques/fig_transport.png assets/optimization/
 cp ../note_drafts/optimization_techniques/fig_learning_rate_schedule.png assets/optimization/fig_learning_rate_schedule.png
 cp ../note_drafts/optimization_techniques/fig_learning_rate_warmup.png assets/optimization/fig_learning_rate_warmup.png
 cp ../note_drafts/optimization_techniques/fig_learning_rate_warmdown.png assets/optimization/fig_learning_rate_warmdown.png
+mkdir -p assets/cuda
+cp ../note_drafts/cuda_note/figures/nvidia-ga100-full-gpu.png assets/cuda/nvidia-ga100-full-gpu.png
+cp ../note_drafts/cuda_note/figures/nvidia-ga100-sm.png assets/cuda/nvidia-ga100-sm.png
+cp ../note_drafts/cuda_note/figures/rtx3090-roofline.png assets/cuda/rtx3090-roofline.png
+
+node render-cuda-figures.mjs \
+  ../note_drafts/cuda_note/nvidia_cuda_intro_reference.tex \
+  assets/cuda
 
 node render-architecture-figures.mjs \
   ../note_drafts/attention_moe/attention_moe.tex \
@@ -73,6 +81,24 @@ node prepare-optimization-note.mjs \
   llm-optimization.html \
   ../note_drafts/optimization_techniques/optimization_techniques.tex
 
+cuda_source_file="$(mktemp)"
+test -n "${cuda_source_file:?}"
+node prepare-cuda-source.mjs \
+  ../note_drafts/cuda_note/nvidia_cuda_intro_reference.tex \
+  "${cuda_source_file:?}"
+pandoc "${cuda_source_file:?}" \
+  --from=latex \
+  --to=html5 \
+  --mathml \
+  --toc \
+  --toc-depth=3 \
+  --shift-heading-level-by=1 \
+  --template=cuda-notes-template.html \
+  --output=cuda-notes.html
+node prepare-cuda-note.mjs \
+  cuda-notes.html \
+  ../note_drafts/cuda_note/nvidia_cuda_intro_reference.tex
+
 pandoc ../note_drafts/attention_moe/attention_moe.tex \
   --from=latex \
   --to=html5 \
@@ -86,4 +112,4 @@ pandoc ../note_drafts/attention_moe/attention_moe.tex \
   --output=modern-llm-architecture.html
 node prepare-architecture-note.mjs modern-llm-architecture.html
 
-node render-katex.mjs article.html notes.html faster-training.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html
+node render-katex.mjs article.html notes.html faster-training.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html

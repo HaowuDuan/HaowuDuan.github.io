@@ -1,0 +1,1432 @@
+---
+title: CUDA
+order: 1
+chapterNumber: 1
+math: true
+description: GPU execution, CUDA programming, profiling, and performance limits
+sections:
+  - title: GPU and CUDA
+    id: gpu-and-cuda
+    label: "1.1"
+  - title: Array Addition
+    id: array-addition
+    label: "1.2"
+  - title: Performance Limits and Failure Modes
+    id: "sec:gpu-underutilization"
+    label: "1.3"
+---
+
+<p>This reference builds a CUDA mental model around one array-addition
+example. Section 1 defines the CPU, GPU, host memory, device memory, and
+CUDA execution model, then places those definitions in an A100 and an
+RTX 3090. Section 2 develops and measures the addition kernel. Section 3
+uses eight pairs of small programs to show why a GPU may wait or do
+unnecessary work.</p>
+<h2 id="gpu-and-cuda">GPU and CUDA</h2>
+<h3 id="chap:origins">CPU and GPU interaction</h3>
+<p><span id="chap:getting-started"
+data-label="chap:getting-started"></span></p>
+<p>A discrete GPU normally works alongside the CPU in the same computer.
+This is true for a data-center GPU or a workstation GPU. CUDA calls the
+computer that runs the CPU code the host. The host’s main RAM
+(random-access memory) is called host memory and normally uses DDR
+(double data rate) DRAM (dynamic random-access memory). A discrete GPU
+has separate device memory, which is also DRAM. Data-center GPUs usually
+use HBM (high-bandwidth memory), while consumer GPUs usually use GDDR
+(graphics double data rate) memory <span class="citation">[<a href="#ref-ampere2020">4</a>, <a href="#ref-ga102whitepaper">5</a>]</span>. This section assumes a
+discrete GPU. An integrated GPU may instead share system DRAM with the
+CPU.</p>
+<p>The CPU runs the main program and launches a GPU kernel for work that
+can be split among many threads <span class="citation">[<a href="#ref-gupta2020origins">1</a>]</span>. Figure <a
+href="#fig:cpu-gpu-interaction" data-reference-type="ref"
+data-reference="fig:cpu-gpu-interaction">1</a> shows the complete
+interaction.</p>
+<p>For informal discussion, this note calls kernel work either
+<em>computation</em> or <em>logistics</em>. These are not CUDA
+terms.</p>
+<ul>
+<li><p>A <em>computation kernel</em> performs the numerical operation of
+interest.</p></li>
+<li><p>A <em>logistics kernel</em> prepares data for another kernel, for
+example by transposing, gathering, scattering, packing, or unpacking the
+data.</p></li>
+</ul>
+<p>One kernel can perform both kinds of work. Copies between host and
+device memory are data transfers, not kernels.</p>
+<figure id="fig:cpu-gpu-interaction" data-latex-placement="htbp">
+<img src="/notes/cuda/cpu-gpu-interaction.svg" alt="Control and data movement between the CPU, host memory, GPU, and device memory." />
+<figcaption>The CPU controls the program. H2D and D2H mean
+host-to-device and device-to-host data movement. A kernel launch returns
+control to the CPU; the CPU must later wait before reading the
+result.</figcaption>
+</figure>
+<p>The execution sequence is</p>
+<ol>
+<li><p>The CPU makes the input available to the GPU.</p></li>
+<li><p>The CPU launches the kernel and continues without waiting for the
+GPU.</p></li>
+<li><p>GPU threads compute the result.</p></li>
+<li><p>The CPU calls <code>cudaDeviceSynchronize()</code> and waits
+before reading the result.</p></li>
+</ol>
+<p>A simple time budget for a run with no overlap is
+<span class="equation-block" data-equation-numbers="1" id="eq:heterogeneous-time-budget"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">total</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">host</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">H2D</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">launch</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">kernel</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">D2H</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span></span></span></span></span><span class="equation-number" aria-hidden="true">(1)</span></span>
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">host</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+is CPU work outside the launch and copies.
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">H2D</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">D2H</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+are the input and result copy times.
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">launch</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+is the time the CPU spends submitting the kernel, and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">kernel</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+is the GPU execution time. A later call to
+<code>cudaDeviceSynchronize()</code> only makes the CPU wait for
+unfinished GPU work; it does not add a second kernel execution. Data
+rearrangement may add further terms. If CPU work, copies, and kernel
+execution overlap, their times cannot simply be added.</p>
+<h3 id="chap:ecosystem">Libraries and tools</h3>
+<p>Before writing a kernel, ask whether a tested implementation already
+exists.
+<span class="equation-block" data-equation-numbers="2" id="eq:abstraction-ladder"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">application</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">⟶</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">numerical library</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">⟶</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">general CUDA building blocks</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">⟶</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord text"><span class="mord">custom kernel</span></span><span class="mord">.</span></span></span></span></span><span class="equation-number" aria-hidden="true">(2)</span></span> Use the leftmost level
+that provides the required operation and control.</p>
+<p>Table <a href="#tab:cuda-scientific-libraries"
+data-reference-type="ref"
+data-reference="tab:cuda-scientific-libraries">1</a> maps common
+operations to CUDA libraries <span class="citation">[<a href="#ref-gupta2020ecosystem">2</a>, <a href="#ref-cudax2026">16</a>]</span>. NCCL is the NVIDIA
+Collective Communications Library.</p>
+<div id="tab:cuda-scientific-libraries">
+<table>
+<caption>Common numerical operations and CUDA libraries.</caption>
+<thead>
+<tr>
+<th style="text-align: left;">Mathematical task</th>
+<th style="text-align: left;">Library</th>
+<th style="text-align: left;">Physics example</th>
+<th style="text-align: left;">Machine-learning example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Dense matrix products</td>
+<td style="text-align: left;">cuBLAS</td>
+<td style="text-align: left;">basis changes, dense Hamiltonians</td>
+<td style="text-align: left;">linear layers, batched general matrix
+multiplication</td>
+</tr>
+<tr>
+<td style="text-align: left;">Dense solvers</td>
+<td style="text-align: left;">cuSOLVER</td>
+<td style="text-align: left;">least squares, eigensystems</td>
+<td style="text-align: left;">principal component analysis, linear
+regression</td>
+</tr>
+<tr>
+<td style="text-align: left;">Sparse algebra</td>
+<td style="text-align: left;">cuSPARSE</td>
+<td style="text-align: left;">sparse partial differential equation
+systems</td>
+<td style="text-align: left;">graph neural networks, sparse
+features</td>
+</tr>
+<tr>
+<td style="text-align: left;">Fourier transforms</td>
+<td style="text-align: left;">cuFFT</td>
+<td style="text-align: left;">spectral methods, structure factors</td>
+<td style="text-align: left;">spectral convolution, signal features</td>
+</tr>
+<tr>
+<td style="text-align: left;">Pseudorandom sampling</td>
+<td style="text-align: left;">cuRAND</td>
+<td style="text-align: left;">Monte Carlo and stochastic dynamics</td>
+<td style="text-align: left;">initialization, dropout, sampling</td>
+</tr>
+<tr>
+<td style="text-align: left;">Tensor contractions</td>
+<td style="text-align: left;">cuTENSOR</td>
+<td style="text-align: left;">many-body tensor algebra</td>
+<td style="text-align: left;">attention, <code>einsum</code> layers</td>
+</tr>
+<tr>
+<td style="text-align: left;">Collectives</td>
+<td style="text-align: left;">NCCL</td>
+<td style="text-align: left;">multi-GPU reductions</td>
+<td style="text-align: left;">gradient all-reduce</td>
+</tr>
+<tr>
+<td style="text-align: left;">Partitioned global memory</td>
+<td style="text-align: left;">NVSHMEM</td>
+<td style="text-align: left;">fine-grained multi-GPU exchange</td>
+<td style="text-align: left;">model and tensor parallelism</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Before using a CUDA library, check how the library stores arrays,
+which numerical precision the library uses, and whether the library
+applies any normalization. Also check whether repeated calls with the
+same input must return the same result.</p>
+<p>Choose the tool by what you need to see.</p>
+<ul>
+<li><p>Nsight Systems shows the CPU and GPU timeline <span class="citation">[<a href="#ref-nsightsystems2026">17</a>]</span>.</p></li>
+<li><p>Nsight Compute analyzes one GPU kernel <span class="citation">[<a href="#ref-nsightcompute2026">18</a>]</span>.</p></li>
+<li><p>Compute Sanitizer detects memory-access and synchronization
+errors <span class="citation">[<a href="#ref-computesanitizer2026">19</a>]</span>.</p></li>
+</ul>
+<h3 id="chap:model">Programming model</h3>
+<p>At launch, the software defines a <em>grid</em> of <em>blocks</em>
+and <em>threads</em>. For example,
+<code>kernel&lt;&lt;&lt;6, 64&gt;&gt;&gt;(arguments)</code> creates one
+grid with six blocks and 64 threads per block. Every thread runs the
+kernel body. The launch does not name an SM.</p>
+<p>The streaming multiprocessor (SM) is physical hardware. CUDA assigns
+each whole block to one SM, where it normally remains until it finishes.
+Several blocks can share an SM if resources permit. The SM divides each
+block into consecutive groups of 32 threads called <em>warps</em>. A
+warp is a scheduling group formed by the hardware, not an object named
+in the launch or a fixed component inside the SM <span class="citation">[<a href="#ref-cuda-programming-guide">10</a>]</span>.</p>
+<p>One A100 SM can keep at most
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">2</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">048</span></span></span></span>
+threads, or 64 warps, resident. One RTX 3090 SM can keep at most
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">1</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">536</span></span></span></span>
+threads, or 48 warps, resident <span class="citation">[<a href="#ref-cuda-programming-guide">10</a>]</span>. Resident means that the
+thread’s block is on the SM and has not finished. These numbers are
+capacity limits, not counts of arithmetic units. Register and
+shared-memory use can reduce them.</p>
+<p>To keep the GPU busy, the program must launch enough blocks. Too few
+blocks leaves some SMs unused. Each active SM also needs enough resident
+warps to run another warp while one waits. The program chooses the grid
+and block sizes; CUDA chooses which SM runs each block. Figure <a
+href="#fig:cuda-programming-model" data-reference-type="ref"
+data-reference="fig:cuda-programming-model">2</a> shows this
+mapping.</p>
+<figure id="fig:cuda-programming-model" data-latex-placement="htbp">
+<img src="/notes/cuda/cuda-programming-model.svg" alt="CUDA grid, block, thread, warp, and streaming-multiprocessor hierarchy." />
+<figcaption>Software defines the grid, blocks, and threads. CUDA assigns
+a whole block to an SM. This 64-thread block becomes two 32-thread
+warps <span class="citation">[<a href="#ref-gupta2020model">3</a>, <a href="#ref-cuda-programming-guide">10</a>]</span>.</figcaption>
+</figure>
+<p>A CUDA <em>stream</em> belongs to one CUDA program. It is a sequence
+of kernel launches and memory operations that run in submission order
+<span class="citation">[<a href="#ref-cuda-programming-guide">10</a>]</span>. A
+launch that does not name a stream uses the default stream. For example,
+let <code>kernel_1</code> and <code>kernel_2</code> stand for any two
+kernels.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"><code>// Both kernels are submitted to the default stream.
+kernel_1&lt;&lt;&lt;grid, block&gt;&gt;&gt;();
+kernel_2&lt;&lt;&lt;grid, block&gt;&gt;&gt;();</code></pre>
+<p>The CPU can submit both launches without waiting. On the GPU,
+however, <code>kernel_1</code> finishes before <code>kernel_2</code>
+starts because both belong to the same stream.</p>
+<p>One program can instead create two streams and place one kernel in
+each.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"><code>cudaStream_t stream_1, stream_2;
+cudaStreamCreate(&amp;stream_1);
+cudaStreamCreate(&amp;stream_2);
+
+// The fourth launch argument selects the stream.
+kernel_1&lt;&lt;&lt;grid, block, 0, stream_1&gt;&gt;&gt;();
+kernel_2&lt;&lt;&lt;grid, block, 0, stream_2&gt;&gt;&gt;();</code></pre>
+<p>The third launch argument, zero, requests no dynamic shared memory.
+The CPU again submits both launches without waiting. If the kernels are
+independent and the GPU has enough free resources, their execution may
+overlap. CUDA does not guarantee overlap.</p>
+<p>Two separate operating-system programs are not two CUDA streams. They
+are separate programs competing for the same GPU. The example above uses
+two streams inside one program to request concurrent kernel
+execution.</p>
+<p>For a one-dimensional launch, a thread’s global index is
+<span class="equation-block" data-equation-numbers="3" id="eq:chapter-global-index-1d"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0502em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8095em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span></span></span></span></span><span class="equation-number" aria-hidden="true">(3)</span></span> where
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6111em;"></span><span class="mord text"><span class="mord texttt">threadIdx.x</span></span></span></span></span>,
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6111em;"></span><span class="mord text"><span class="mord texttt">blockIdx.x</span></span></span></span></span>,
+and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0502em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6111em;"></span><span class="mord text"><span class="mord texttt">blockDim.x</span></span></span></span></span>.
+Figure <a href="#fig:cuda-index-1d" data-reference-type="ref"
+data-reference="fig:cuda-index-1d">3</a> shows a concrete example.</p>
+<figure id="fig:cuda-index-1d" data-latex-placement="htbp">
+<img src="/notes/cuda/cuda-index-1d.svg" alt="One-dimensional CUDA block and thread indexing." />
+<figcaption>One-dimensional indexing. Thread
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>
+in block
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span>
+has global index
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">4</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">9</span></span></span></span>.</figcaption>
+</figure>
+<p>In two dimensions,
+<span class="equation-block equation-block-multiline" data-equation-numbers="4,5" id="eq:chapter-global-index-2d"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.7em;vertical-align:-1.1em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6em;"><span style="top:-3.76em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">i</span></span></span><span style="top:-2.26em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0572em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.1em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6em;"><span style="top:-3.76em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0502em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span></span></span><span style="top:-2.26em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">y</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0502em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">y</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0359em;">y</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord">.</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.1em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:1em;"></span><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6em;"><span style="top:-3.6em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"></span></span><span style="top:-2.1em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.1em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6em;"><span style="top:-3.76em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord text"><span class="mord">(4)</span></span></span></span><span style="top:-2.26em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord text"><span class="mord">(5)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.1em;"><span></span></span></span></span></span></span></span></span></span></span></span></span> Suppose the array stores all
+of row 0, then all of row 1, and so on. This is called <em>row-major
+storage</em>. If each row has
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.109em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+columns, the one-dimensional index is
+<span class="equation-block" data-equation-numbers="6" id="eq:row-major-index"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">ℓ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.109em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span><span class="mord">.</span></span></span></span></span><span class="equation-number" aria-hidden="true">(6)</span></span> Figure <a
+href="#fig:cuda-index-2d" data-reference-type="ref"
+data-reference="fig:cuda-index-2d">4</a> shows both steps. First obtain
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mclose">)</span></span></span></span>
+from the block and thread coordinates, then convert
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mclose">)</span></span></span></span>
+to one index
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">ℓ</span></span></span></span>.</p>
+<figure id="fig:cuda-index-2d" data-latex-placement="htbp">
+<img src="/notes/cuda/cuda-index-2d.svg" alt="Two-dimensional CUDA indexing and row-major flattening." />
+<figcaption>Two-dimensional indexing followed by row-major flattening.
+The highlighted thread has array coordinate
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">4</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">2</span><span class="mclose">)</span></span></span></span>
+and linear index
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">ℓ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">16</span></span></span></span>.</figcaption>
+</figure>
+<p>Threads in the same block can exchange data through shared memory.
+<code>__syncthreads()</code> synchronizes those threads. No thread
+continues past the barrier until every thread in the block reaches it.
+CUDA may start different blocks in any order or run them on different
+SMs, so this barrier cannot synchronize different blocks <span class="citation">[<a href="#ref-cuda-memory-model">12</a>]</span>.</p>
+<p>CUDA provides several places to store data. The locations differ in
+capacity, which threads can use them, and how long the data remains
+available. L1 and L2 mean level-1 and level-2 cache. Table <a
+href="#tab:memory-hierarchy" data-reference-type="ref"
+data-reference="tab:memory-hierarchy">2</a> summarizes the storage
+locations.</p>
+<div id="tab:memory-hierarchy">
+<table>
+<caption>Where CUDA data can be stored and which threads can use
+it.</caption>
+<thead>
+<tr>
+<th style="text-align: left;">Storage</th>
+<th style="text-align: left;">Which threads can use it</th>
+<th style="text-align: left;">How long it exists</th>
+<th style="text-align: left;">What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Registers</td>
+<td style="text-align: left;">one thread</td>
+<td style="text-align: left;">thread</td>
+<td style="text-align: left;">fast storage inside the SM; limited
+amount</td>
+</tr>
+<tr>
+<td style="text-align: left;">Local memory</td>
+<td style="text-align: left;">one thread</td>
+<td style="text-align: left;">thread</td>
+<td style="text-align: left;">private data stored in device memory</td>
+</tr>
+<tr>
+<td style="text-align: left;">Shared memory</td>
+<td style="text-align: left;">one block</td>
+<td style="text-align: left;">block</td>
+<td style="text-align: left;">on-chip memory used explicitly by the
+kernel</td>
+</tr>
+<tr>
+<td style="text-align: left;">L1 cache</td>
+<td style="text-align: left;">threads using one SM</td>
+<td style="text-align: left;">managed by hardware</td>
+<td style="text-align: left;">cache used by one SM</td>
+</tr>
+<tr>
+<td style="text-align: left;">L2 cache</td>
+<td style="text-align: left;">all SMs on a device</td>
+<td style="text-align: left;">managed by hardware</td>
+<td style="text-align: left;">cache used by all SMs</td>
+</tr>
+<tr>
+<td style="text-align: left;">Global memory</td>
+<td style="text-align: left;">all threads on a device</td>
+<td style="text-align: left;">until freed</td>
+<td style="text-align: left;">large device DRAM</td>
+</tr>
+<tr>
+<td style="text-align: left;">Host memory</td>
+<td style="text-align: left;">CPU, and GPU when mapped or managed</td>
+<td style="text-align: left;">until freed</td>
+<td style="text-align: left;">system DRAM reached through the connection
+between CPU and GPU</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Capacity tells us how much data fits in each memory level.
+Performance also depends on how often data moves between levels. Shared
+memory is useful when threads reuse values loaded once. Without reuse,
+copying data through shared memory adds work but does not reduce the
+bytes moved to and from global memory.</p>
+<p>Compute capability identifies the CUDA features and resource limits
+supported by a GPU. It is not a speed rating. A benchmark should
+therefore report the GPU model, not only the compute capability <span class="citation">[<a href="#ref-cuda-programming-guide">10</a>]</span>.</p>
+<h3 id="sec:ampere-comparison">Ampere A100 and RTX 3090</h3>
+<p>The A100 uses the Ampere GA100 chip, while the RTX 3090 uses GA102.
+Both follow the same CUDA execution model but differ in arithmetic
+throughput and memory <span class="citation">[<a href="#ref-ampere2020">4</a>, <a href="#ref-ga102whitepaper">5</a>]</span>.</p>
+<p>The architecture diagrams show the complete chips, not the product
+configurations. Figure <a href="#fig:ga100-full-gpu"
+data-reference-type="ref" data-reference="fig:ga100-full-gpu">5</a>
+shows all 128 SMs in GA100; the A100 enables 108. GA102 contains 84 SMs,
+while the RTX 3090 enables 82 <span class="citation">[<a href="#ref-ampere2020">4</a>, <a href="#ref-ga102whitepaper">5</a>, <a href="#ref-rtx3090specs">6</a>]</span>.</p>
+<figure id="fig:ga100-full-gpu" data-latex-placement="htbp">
+<img src="/notes/cuda/nvidia-ga100-full-gpu.png" alt="NVIDIA GA100 full-chip block diagram." />
+<figcaption>Complete GA100 chip design. Reproduced from NVIDIA <span class="citation">[<a href="#ref-ampere2020">4</a>]</span>.</figcaption>
+</figure>
+<p>Figure <a href="#fig:ga100-sm" data-reference-type="ref"
+data-reference="fig:ga100-sm">6</a> shows one GA100 SM. Its four
+sections share the L1 cache and shared memory. A block remains on the SM
+while its warps run there.</p>
+<figure id="fig:ga100-sm" data-latex-placement="htbp">
+<img src="/notes/cuda/nvidia-ga100-sm.png" alt="NVIDIA GA100 streaming multiprocessor block diagram." style="width:74.0%" />
+<figcaption>One GA100 streaming multiprocessor. Reproduced from
+NVIDIA <span class="citation">[<a href="#ref-ampere2020">4</a>]</span>.</figcaption>
+</figure>
+<p>Table <a href="#tab:a100-3090" data-reference-type="ref"
+data-reference="tab:a100-3090">3</a> compares 32-bit floating-point
+(FP32) throughput, 64-bit floating-point (FP64) throughput,
+device-memory capacity, memory bandwidth, and the maximum number of
+resident threads per SM. Throughput is given in tera floating-point
+operations per second (TFLOP/s). The devices use High Bandwidth Memory 2
+(HBM2) and Graphics Double Data Rate 6X (GDDR6X) memory <span class="citation">[<a href="#ref-ampere2020">4</a>, <a href="#ref-ga102whitepaper">5</a>, <a href="#ref-rtx3090specs">6</a>, <a href="#ref-cuda-programming-guide">10</a>]</span>.</p>
+<div id="tab:a100-3090">
+<table>
+<caption>Selected specifications for two Ampere GPUs <span class="citation">[<a href="#ref-ampere2020">4</a>, <a href="#ref-ga102whitepaper">5</a>, <a href="#ref-rtx3090specs">6</a>, <a href="#ref-cuda-programming-guide">10</a>]</span>.</caption>
+<thead>
+<tr>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">A100 40 GB (GA100)</th>
+<th style="text-align: left;">RTX 3090 (GA102)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">FP32 throughput</td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">19.5</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">TFLOP/s</span></span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">35.6</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">TFLOP/s</span></span></span></span></span></td>
+</tr>
+<tr>
+<td style="text-align: left;">FP64 throughput</td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">9.7</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">TFLOP/s</span></span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">0.56</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">TFLOP/s</span></span></span></span></span></td>
+</tr>
+<tr>
+<td style="text-align: left;">Device memory</td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">40</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">GB</span></span></span></span></span>
+HBM2,
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1555</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">GB/s</span></span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">24</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">GB</span></span></span></span></span>
+GDDR6X,
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">936</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">GB/s</span></span></span></span></span></td>
+</tr>
+<tr>
+<td style="text-align: left;">Maximum resident threads per SM</td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">2</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">048</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">1</span><span class="mord"><span class="mpunct">,</span></span><span class="mord">536</span></span></span></span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The throughput and bandwidth entries are vendor peak values, not
+measurements from the example programs. GA102 FP64 throughput is
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/64</span></span></span></span>
+of its FP32 throughput, so the RTX 3090 value is
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">35.6/64</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">0.56</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">TFLOP/s</span></span></span></span></span>
+after rounding <span class="citation">[<a href="#ref-ga102whitepaper">5</a>]</span>.</p>
+<h2 id="array-addition">Array addition</h2>
+<h3 id="chap:vector-add">Vector addition</h3>
+<p>Let
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>
+and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">y</span></span></span></span>
+be arrays of
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">20</span></span></span></span></span></span></span></span></span></span></span></span>
+floating-point numbers. The program adds
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>
+to
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">y</span></span></span></span>:
+<span class="equation-block" data-equation-numbers="7" id="eq:vector-add"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">←</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1.</span></span></span></span></span><span class="equation-number" aria-hidden="true">(7)</span></span> If every
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>
+and every
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span>
+before the addition, every output should be 3. The CPU version is one
+loop.</p>
+<div class="sourceCode" id="cb3" data-language="C++"
+data-caption="Serial CPU addition."><pre
+class="sourceCode c++"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> add_cpu<span class="op">(</span><span class="dt">int</span> n<span class="op">,</span> <span class="at">const</span> <span class="dt">float</span><span class="op">*</span> x<span class="op">,</span> <span class="dt">float</span><span class="op">*</span> y<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">// One CPU thread processes the array from beginning to end.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    y<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> x<span class="op">[</span>i<span class="op">]</span> <span class="op">+</span> y<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>A CUDA kernel is a function that runs on the GPU. The CPU launches a
+kernel with
+<code>&lt;&lt;&lt;number_of_blocks, threads_per_block&gt;&gt;&gt;</code>.
+The simplest launch uses one GPU thread, so that thread repeats the CPU
+loop.</p>
+<pre class="CUDA" data-language="CUDA"
+data-caption="One GPU thread processes the whole array."><code>__global__ void add_one_thread(int n, const float* x, float* y) {
+  // This loop is serial because the launch below creates only one GPU thread.
+  for (int i = 0; i &lt; n; ++i) {
+    y[i] = x[i] + y[i];
+  }
+}
+
+// CPU code: launch one block containing one thread.
+add_one_thread&lt;&lt;&lt;1, 1&gt;&gt;&gt;(N, x, y);</code></pre>
+<p>To use many threads, give each thread a different first array index.
+The first line of <code>add_grid</code> is Equation <a class="equation-reference" href="#eq:chapter-global-index-1d">(3)</a>
+from Section <a href="#chap:model" data-reference-type="ref"
+data-reference="chap:model">1.3</a>.</p>
+<pre class="CUDA" data-language="CUDA"
+data-caption="Many GPU threads divide the array."><code>__global__ void add_grid(int n, const float* x, float* y) {
+  // This thread begins at one distinct array index.
+  const int index = blockIdx.x * blockDim.x + threadIdx.x;
+  // This is the total number of threads created by the launch.
+  const int stride = blockDim.x * gridDim.x;
+
+  // If needed, this thread continues one complete grid farther in the array.
+  for (int i = index; i &lt; n; i += stride) {
+    y[i] = x[i] + y[i];
+  }
+}</code></pre>
+<p>The CPU chooses 256 threads per block and creates enough blocks to
+cover the array.</p>
+<pre class="CUDA" data-language="CUDA"><code>const int threads_per_block = 256;
+const int number_of_blocks =
+    (N + threads_per_block - 1) / threads_per_block;
+
+// CPU code: launch the parallel kernel on the GPU.
+add_grid&lt;&lt;&lt;number_of_blocks, threads_per_block&gt;&gt;&gt;(N, x, y);
+
+// Wait before the CPU checks the result.
+cudaDeviceSynchronize();</code></pre>
+<p>C++ integer division discards the remainder, so adding
+<code>threads_per_block - 1</code> rounds the number of blocks up. For
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1000</span></span></span></span>,
+the launch creates
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">4</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">256</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1024</span></span></span></span>
+threads. Threads 0 through 999 perform the addition. Threads 1000
+through 1023 test <code>i &lt; n</code>, find it false, make no array
+access, and finish. They are still real threads in the kernel launch;
+they simply have no array element to process.</p>
+<p>For the launch above, each valid thread processes one element. The
+<code>i += stride</code> update also lets the same kernel work with
+fewer threads: after processing
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span>,
+a thread next processes
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6111em;"></span><span class="mord text"><span class="mord texttt">stride</span></span></span></span></span>.</p>
+<h4 id="unified-memory.">Unified Memory.</h4>
+<p>The CPU and GPU normally use separate memory allocations. Unified
+Memory creates allocations that both can address through the same
+pointers. This simplifies the code, but the array data must still move
+between CPU memory and GPU memory. Figure <a href="#fig:unified-memory"
+data-reference-type="ref" data-reference="fig:unified-memory">7</a>
+shows the difference.</p>
+<figure id="fig:unified-memory" data-latex-placement="htbp">
+<img src="/notes/cuda/unified-memory.svg" alt="Unified Memory movement between CPU and GPU." />
+<figcaption>Unified Memory removes separate CPU and GPU pointers, not
+the data movement between CPU memory and GPU memory.</figcaption>
+</figure>
+<p>The essential allocation and use are:</p>
+<pre class="CUDA" data-language="CUDA"
+data-basicstyle="\ttfamily\footnotesize"><code>float *x = nullptr, *y = nullptr;
+const std::size_t bytes = N * sizeof(float);
+
+// CUDA stores the two allocation addresses in x and y.
+cudaMallocManaged(&amp;x, bytes);
+cudaMallocManaged(&amp;y, bytes);
+
+// CPU initializes x and y.
+for (int i = 0; i &lt; N; ++i) {
+  x[i] = 1.0f;
+  y[i] = 2.0f;
+}
+
+// GPU uses the same pointers.
+add_grid&lt;&lt;&lt;number_of_blocks, threads_per_block&gt;&gt;&gt;(N, x, y);
+cudaDeviceSynchronize();
+
+// CPU can now check y.
+cudaFree(x);
+cudaFree(y);</code></pre>
+<p>Here <code>&amp;x</code> means the address of the pointer variable
+<code>x</code>. CUDA needs that address so it can store the allocation
+address in <code>x</code>. The complete program asks CUDA to move the
+input arrays to GPU memory before the kernel and move the result back
+afterward. This keeps the transfer time separate from the kernel time in
+the profile; the allocation is still Unified Memory.</p>
+<p>All runnable code and measurement records are in this repository:</p>
+<div class="center">
+<p><a href="https://github.com/HaowuDuan/cuda-example-for-note"
+class="uri">https://github.com/HaowuDuan/cuda-example-for-note</a></p>
+</div>
+<p>From the repository root, build and run with:</p>
+<div class="sourceCode" id="cb8" data-language="bash"
+data-numbers="none"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compile the example, then run it.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">nvcc</span> <span class="at">-O3</span> <span class="at">-lineinfo</span> add_grid.cu <span class="at">-o</span> add_grid</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./add_grid</span></span></code></pre></div>
+<p>The expected output is <code>Max error = 0</code>. The
+<code>-lineinfo</code> option lets the profiling tools connect their
+reports to source lines.</p>
+<h3 id="chap:profiling">Profiling</h3>
+<p>A kernel can be limited by data movement, arithmetic, or the cost of
+starting the kernel. The following kernel is a simple way to separate
+the three cases.</p>
+<pre class="CUDA" data-language="CUDA"
+data-caption="One kernel used with different array and loop sizes."><code>__global__ void playground(float* data, int n, int repeats,
+                           float multiplier, float offset) {
+  // Give this thread one array element.
+  const int index = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (index &lt; n) {
+    // Load once, perform repeats updates, then store once.
+    float value = data[index];
+    for (int r = 0; r &lt; repeats; ++r) {
+      value = value * multiplier + offset;
+    }
+    data[index] = value;
+  }
+}</code></pre>
+<ul>
+<li><p><strong>Memory-bound.</strong> Use a large array and few
+arithmetic updates. The arithmetic finishes quickly, then compute waits
+for more data.</p></li>
+<li><p><strong>Compute-bound.</strong> Use a large <code>repeats</code>
+value. The array element is already available while the arithmetic
+continues. This is useful work if the updates are required; otherwise
+the kernel is simply doing unnecessary arithmetic.</p></li>
+<li><p><strong>Overhead-bound.</strong> Use a very small array and few
+updates. The GPU finishes the work quickly, so the fixed cost of
+launching the kernel becomes a large part of the total time.</p></li>
+</ul>
+<p>Splitting one calculation across many kernels can add another cost. A
+value kept inside one kernel may have to be written to GPU memory at the
+end of one kernel and read again by the next. This extra data movement
+is distinct from kernel launch time.</p>
+<p>The array-addition program demonstrates three CUDA tools. Each
+answers one question.</p>
+<h4
+id="compute-sanitizer-is-the-program-accessing-memory-correctly">Compute
+Sanitizer: is the program accessing memory correctly?</h4>
+<div class="sourceCode" id="cb10" data-language="bash"
+data-numbers="none"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check GPU memory accesses.</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">compute-sanitizer</span> <span class="at">--tool</span> memcheck ./add_grid</span></code></pre></div>
+<p>A correct run prints <code>Max error = 0</code> and ends with
+<code>ERROR SUMMARY: 0 errors</code> <span class="citation">[<a href="#ref-computesanitizer2026">19</a>]</span>.</p>
+<h4 id="nsight-systems-where-does-the-complete-run-spend-time">Nsight
+Systems: where does the complete run spend time?</h4>
+<div class="sourceCode" id="cb11" data-language="bash"
+data-numbers="none"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Record CPU calls, data movement, and GPU work on one timeline.</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">nsys</span> profile <span class="at">--trace</span><span class="op">=</span>cuda <span class="at">--stats</span><span class="op">=</span>true <span class="dt">\</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--force-overwrite</span><span class="op">=</span>true <span class="at">--output</span><span class="op">=</span>add_grid_systems ./add_grid</span></code></pre></div>
+<p>The command saves . Open that report in Nsight Systems to see when
+the CPU submits work, when the arrays move, and when
+<code>add_grid</code> runs <span class="citation">[<a href="#ref-nsightsystems2026">17</a>]</span>.</p>
+<p>On the office RTX 3090, Nsight Systems measured 8.389 MB moving from
+CPU memory to GPU memory, 4.194 MB moving back, and
+15.072 <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span><span class="mord mathrm">s</span></span></span></span>
+for <code>add_grid</code>. The exact command, hardware, driver, and raw
+output are recorded in in the code repository. One array contains
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">20</span></span></span></span></span></span></span></span></span></span></span></span>
+four-byte floats, so its size is 4.194 MB. Two input arrays move to the
+GPU and one result array moves back.</p>
+<h4 id="nsight-compute-what-limits-the-addition-kernel">Nsight Compute:
+what limits the addition kernel?</h4>
+<div class="sourceCode" id="cb12" data-language="bash"
+data-numbers="none"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Inspect the launch, arithmetic use, and memory use of add_grid.</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">ncu</span> <span class="at">--launch-count</span> 1 <span class="dt">\</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--section</span> LaunchStats <span class="dt">\</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--section</span> SpeedOfLight <span class="dt">\</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--section</span> MemoryWorkloadAnalysis <span class="dt">\</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--force-overwrite</span> <span class="at">-o</span> add_grid_compute ./add_grid</span></code></pre></div>
+<p>The three section names are Nsight Compute’s names.
+<code>LaunchStats</code> reports the number of blocks and threads.
+<code>SpeedOfLight</code> compares the kernel’s arithmetic and memory
+use with the GPU’s measured limits. <code>MemoryWorkloadAnalysis</code>
+reports the kernel’s memory traffic  <span class="citation">[<a href="#ref-nsightcompute2026">18</a>, <a href="#ref-nsightcompute-profiling">14</a>]</span>.</p>
+<p>Array addition reads
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>,
+reads
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>,
+and writes the new
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>.
+Since a <code>float</code> occupies four bytes, the minimum traffic is
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">12</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>
+bytes. Its effective bandwidth is therefore
+<span class="equation-block" data-equation-numbers="8" id="eq:effective-bandwidth"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathcal" style="margin-right:0.0304em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0304em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight" style="margin-right:0.0778em;">eff</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.1963em;vertical-align:-0.836em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">kernel</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">12</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.836em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord">.</span></span></span></span></span><span class="equation-number" aria-hidden="true">(8)</span></span> For
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">20</span></span></span></span></span></span></span></span></span></span></span></span>
+and the measured kernel time of
+15.072 <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span><span class="mord mathrm">s</span></span></span></span>,
+this is 834.9 GB/s. The kernel moves twelve bytes for one addition, so
+memory movement, not arithmetic, is the main limit.</p>
+<h2 id="sec:gpu-underutilization">Performance limits and failure
+modes</h2>
+<p>Section 2 separated three basic limits: data movement, arithmetic,
+and kernel launch. This section shows how those limits appear in code.
+Every example follows the same order: identify the problem, compare two
+implementations, explain the difference, and state what to change. One
+kernel can have more than one problem.</p>
+<table>
+<caption>The question answered by each example.</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Problem</strong></th>
+<th style="text-align: left;"><strong>What happens</strong></th>
+<th style="text-align: left;"><strong>Main correction</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Memory-bound kernel</td>
+<td style="text-align: left;">Compute waits for array data</td>
+<td style="text-align: left;">Remove unnecessary reads and writes</td>
+</tr>
+<tr>
+<td style="text-align: left;">Compute-bound kernel</td>
+<td style="text-align: left;">Arithmetic takes most of the time</td>
+<td style="text-align: left;">Remove unnecessary arithmetic</td>
+</tr>
+<tr>
+<td style="text-align: left;">Uncoalesced access</td>
+<td style="text-align: left;">A warp needs many memory transactions</td>
+<td style="text-align: left;">Give adjacent threads adjacent
+addresses</td>
+</tr>
+<tr>
+<td style="text-align: left;">Warp divergence</td>
+<td style="text-align: left;">One warp runs both branches</td>
+<td style="text-align: left;">Group threads that choose the same
+branch</td>
+</tr>
+<tr>
+<td style="text-align: left;">Atomic contention</td>
+<td style="text-align: left;">Threads wait to update one value</td>
+<td style="text-align: left;">Combine updates before the atomic
+operation</td>
+</tr>
+<tr>
+<td style="text-align: left;">Memory latency</td>
+<td style="text-align: left;">Every resident warp is waiting</td>
+<td style="text-align: left;">Keep enough warps available on each
+SM</td>
+</tr>
+<tr>
+<td style="text-align: left;">Launch overhead</td>
+<td style="text-align: left;">The GPU waits for the next launch</td>
+<td style="text-align: left;">Combine very small kernels</td>
+</tr>
+<tr>
+<td style="text-align: left;">CPU–GPU transfer</td>
+<td style="text-align: left;">Copies take most of the time</td>
+<td style="text-align: left;">Keep arrays in GPU memory</td>
+</tr>
+</tbody>
+</table>
+<p>The source is in <a
+href="https://github.com/HaowuDuan/cuda-example-for-note"
+class="uri">https://github.com/HaowuDuan/cuda-example-for-note</a>. Each
+folder under contains <code>unoptimized.cu</code> and
+<code>optimized.cu</code>. From the repository root, build all eight
+pairs and run one pair with:</p>
+<div class="sourceCode" id="cb13" data-language="bash"
+data-numbers="none"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build every pair, then run the two transpose versions.</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-C</span> failure_modes</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./failure_modes/coalescing/unoptimized</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="ex">./failure_modes/coalescing/optimized</span></span></code></pre></div>
+<p>Compare the two times on the same machine during the same session.
+GPU clock, temperature, driver, and other running programs can change
+the result.</p>
+<h3 id="memory-bound-kernels">Memory-bound kernels</h3>
+<p>A kernel is <em>memory-bound</em> when moving the input and output
+takes longer than the arithmetic. The arithmetic units then wait for
+data, and faster arithmetic cannot reduce the running time.</p>
+<p>Consider
+<span class="equation-block" data-equation-numbers="9" id="eq:bandwidth-fusion-example"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.044em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.044em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">a</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span><span class="equation-number" aria-hidden="true">(9)</span></span> A two-kernel
+implementation first computes
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>,
+then computes
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.044em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.044em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord mathnormal">a</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>.
+For single-precision arrays and ignoring the cache, the bytes moved
+are</p>
+<ul>
+<li><p><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">12</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>
+bytes for the first kernel, which reads
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>
+and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">y</span></span></span></span>
+and writes
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span>;</p></li>
+<li><p><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">8</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>
+bytes for the second kernel, which reads
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span>
+and writes
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.044em;">z</span></span></span></span>.</p></li>
+</ul>
+<p>The two kernels move
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">20</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>
+bytes in total. A single kernel can read
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>
+and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">y</span></span></span></span>,
+compute
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">a</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="mclose">)</span></span></span></span>,
+and write
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.044em;">z</span></span></span></span>,
+moving only
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">12</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>
+bytes. Both versions perform the same arithmetic, but the single kernel
+never writes or reads the temporary array. Combining the two operations
+is called <em>kernel fusion</em>. Figure <a href="#fig:bandwidth-fusion"
+data-reference-type="ref" data-reference="fig:bandwidth-fusion">8</a>
+shows the removed write and read.</p>
+<figure id="fig:bandwidth-fusion" data-latex-placement="htbp">
+<img src="/notes/cuda/bandwidth-fusion.svg" alt="Memory traffic before and after kernel fusion." />
+<figcaption>One combined kernel removes the write and later read of the
+temporary array without changing the result.</figcaption>
+</figure>
+<p><strong>What to change.</strong> Move less data. Combine operations
+when doing so removes an intermediate array. Reuse a value instead of
+writing it to GPU memory and reading it again. Once memory is already
+moving data as fast as it can, faster arithmetic will not help <span class="citation">[<a href="#ref-cuda-best-practices">13</a>, <a href="#ref-nsightcompute-profiling">14</a>]</span>.</p>
+<h3 id="compute-bound-kernels">Compute-bound kernels</h3>
+<p>A kernel is <em>compute-bound</em> when the arithmetic takes longer
+than loading and storing the data. Being compute-bound is not a problem
+when every operation is needed. The kernel is wasteful only when the
+code repeats a calculation or uses a needlessly expensive one.</p>
+<p>For each input
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>,
+both supplied kernels evaluate the same degree-32 polynomial. The
+coefficients are
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7167em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">3</span></span></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span>
+for
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">32</span></span></span></span>.
+The direct expression and Horner’s form are
+<span class="equation-block" data-equation-numbers="10" id="eq:horner-form"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:3.2043em;vertical-align:-1.4032em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8011em;"><span style="top:-1.8829em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="mrel mtight">=</span><span class="mord mtight">0</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.4032em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7144em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">p</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2em;vertical-align:-0.35em;"></span><span class="mord mathnormal">x</span><span class="mopen"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2em;vertical-align:-0.35em;"></span><span class="mord mathnormal">x</span><span class="mopen"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="minner">⋯</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">x</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">31</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2em;vertical-align:-0.35em;"></span><span class="mord mathnormal">x</span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mclose"><span class="delimsizing size1">)</span></span><span class="mclose"><span class="delimsizing size1">)</span></span><span class="mord">.</span></span></span></span></span><span class="equation-number" aria-hidden="true">(10)</span></span> The unoptimized kernel
+rebuilds every power
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6644em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">p</span></span></span></span></span></span></span></span></span></span></span>
+from
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>.
+Those loops perform
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.3898em;vertical-align:-0.4358em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.954em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="mrel mtight">=</span><span class="mord mtight">0</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4358em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">528</span></span></span></span>
+multiplications, followed by 33 multiply-adds for the sum. The Horner
+kernel starts with
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+and applies
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">←</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7167em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span>
+for
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">31</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">30</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">0</span></span></span></span>.
+It uses 32 multiply-adds and never constructs a power separately. The
+CUDA function <code>fmaf(u, v, w)</code> computes
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">uv</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span></span></span></span>.</p>
+<p>The chosen degree makes the difference easy to measure. Both kernels
+still read one float and write one float per element. Horner’s form
+changes the arithmetic work without changing the bytes moved.</p>
+<p>The roofline plot compares both examples with the GPU’s memory and
+arithmetic limits. It is a reference, not a score. Let
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">F</span></span></span></span>
+be the number of floating-point operations,
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span>
+the minimum bytes read and written, and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">T</span></span></span></span>
+the measured time. Arithmetic intensity
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">I</span></span></span></span>,
+measured performance
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">P</span></span></span></span>,
+and the roofline bound are
+<span class="equation-block" data-equation-numbers="11" id="eq:roofline"><span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">I</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.2408em;vertical-align:-0.8804em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">Q</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">F</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8804em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.0463em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">F</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight" style="margin-right:0.0778em;">roof</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0785em;">I</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">min</span><span class="mspace" style="margin-right:-0.1667em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0502em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">a</span><span class="mtight">x</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal" style="margin-right:0.0785em;">I</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">a</span><span class="mtight">x</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">.</span></span></span></span></span><span class="equation-number" aria-hidden="true">(11)</span></span> Here
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0502em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">a</span><span class="mtight">x</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+is peak device-memory bandwidth and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">a</span><span class="mtight">x</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+is peak arithmetic throughput. The diagonal part of the roof is the
+memory limit
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0502em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">a</span><span class="mtight">x</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord mathnormal" style="margin-right:0.0785em;">I</span></span></span></span>.
+The horizontal part is the arithmetic limit
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">a</span><span class="mtight">x</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>
+<span class="citation">[<a href="#ref-williams2009roofline">7</a>]</span>.</p>
+<p>For the RTX 3090, Table <a href="#tab:a100-3090"
+data-reference-type="ref" data-reference="tab:a100-3090">3</a> gives
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0502em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">a</span><span class="mtight">x</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">936</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">GB/s</span></span></span></span></span>
+and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">a</span><span class="mtight">x</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">35.6</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">TFLOP/s</span></span></span></span></span>.
+The two limits meet at
+<span class="katex-display"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">I</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.2604em;vertical-align:-0.7693em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.4911em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">936</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7401em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">9</span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">35.6</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">12</span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7693em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">38.0</span><span class="mspace"> </span><span class="mord text"><span class="mord">floating-point operations per byte</span></span><span class="mord">.</span></span></span></span></span></p>
+<p>Table <a href="#tab:roofline-measurements" data-reference-type="ref"
+data-reference="tab:roofline-measurements">4</a> gives the plotted
+measurements. One multiply-add counts as two floating-point operations.
+Each program first performs one warm-up. The bandwidth programs report
+the mean of 20 launches and the polynomial programs report the mean of
+10. The table uses the median of seven program runs on the office RTX
+3090. The raw output and setup are in in the code repository <span class="citation">[<a href="#ref-roofline-measurement">8</a>]</span>.</p>
+<div id="tab:roofline-measurements">
+<table>
+<caption>Measured coordinates for Figure <a
+href="#fig:measured-roofline" data-reference-type="ref"
+data-reference="fig:measured-roofline">9</a>.</caption>
+<thead>
+<tr>
+<th style="text-align: left;"><strong>Implementation</strong></th>
+<th style="text-align: left;"><strong>FLOP/byte</strong></th>
+<th style="text-align: left;"><strong>Median time (ms)</strong></th>
+<th style="text-align: left;"><strong>GFLOP/s</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Two kernels,
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.044em;">z</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">a</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="mclose">)</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.100</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.400896</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">83.7</span></span></span></span></td>
+</tr>
+<tr>
+<td style="text-align: left;">Fused kernel,
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.044em;">z</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">a</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="mclose">)</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.167</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.239549</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">140.1</span></span></span></span></td>
+</tr>
+<tr>
+<td style="text-align: left;">Direct polynomial powers</td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">74.25</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.363389</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">6856.1</span></span></span></span></td>
+</tr>
+<tr>
+<td style="text-align: left;">Horner’s form</td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">8.00</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.042474</span></span></span></span></td>
+<td
+style="text-align: left;"><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">6320.0</span></span></span></span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure id="fig:measured-roofline" data-latex-placement="htbp">
+<img src="/notes/cuda/rtx3090-roofline.png" alt="Measured RTX 3090 roofline with memory-bound and compute-bound examples." style="width:94.0%" />
+<figcaption>Roofline for the Section 3.1 and 3.2 examples on the RTX
+3090. The black roof uses vendor peak values; the four points are
+measurements. Fusion moves the memory example up and to the right
+because it removes bytes. Horner’s form moves the polynomial example
+left because it removes arithmetic.</figcaption>
+</figure>
+<p>The two memory points reach about
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8056em;vertical-align:-0.0556em;"></span><span class="mord">90%</span></span></span></span>
+of their bandwidth roof. Fusion reduces the time by a factor of
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1.67</span></span></span></span>.
+Horner’s form reduces the polynomial time by a factor of
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">8.56</span></span></span></span>.
+Its plotted GFLOP/s is slightly lower because it performs far fewer
+operations. The roofline is an upper bound; it does not say that every
+instruction sequence reaches the horizontal peak.</p>
+<p><strong>What to change.</strong> First remove arithmetic that does
+not change the answer. If all the work is needed, measure whether the
+arithmetic hardware is being used well. Use lower precision only when
+the required accuracy permits it. For matrix operations, try a tested
+library before writing a replacement kernel.</p>
+<h3 id="uncoalesced-memory-access">Uncoalesced memory access</h3>
+<p>A warp contains 32 threads. When those threads read or write adjacent
+floats, the GPU can combine their work into a small number of memory
+transactions. When their addresses are far apart, the GPU needs more
+transactions to move the same 32 floats. This slower pattern is called
+<em>uncoalesced memory access</em>.</p>
+<p>The example transposes a
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">4096</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">4096</span></span></span></span>
+matrix. The program divides the matrix into
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">32</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">32</span></span></span></span>
+square regions called <em>tiles</em> and assigns one CUDA block to each
+tile. Figure <a href="#fig:transpose-tile-map" data-reference-type="ref"
+data-reference="fig:transpose-tile-map">10</a> follows one tile from the
+matrix to its block and then to one representative thread.</p>
+<figure id="fig:transpose-tile-map" data-latex-placement="htbp">
+<img src="/notes/cuda/transpose-tile-map.svg" alt="CUDA thread mapping for a tiled matrix transpose." />
+<figcaption>One block covers the selected
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">32</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">32</span></span></span></span>
+tile. Its 256 threads form eight warps. Thread position
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">5</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">2</span><span class="mclose">)</span></span></span></span>
+means
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord text"><span class="mord texttt">threadIdx.x</span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord texttt">threadIdx.y</span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">5</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">2</span><span class="mclose">)</span></span></span></span>.
+That thread processes four rows because the block has 8 thread rows
+while the tile has 32 matrix rows.</figcaption>
+</figure>
+<p>The matrices are stored as flat row-major arrays, so matrix element
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord text"><span class="mord">row</span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">column</span></span><span class="mclose">)</span></span></span></span>
+has index <code>row * n + column</code>. The constants
+<code>tile_width = 32</code> and <code>block_rows = 8</code> fix the
+tile and block shape. The keyword <code>constexpr</code> marks both
+values as compile-time constants. The unoptimized kernel is</p>
+<pre class="CUDA" data-language="CUDA"
+data-caption="One $32\times32$ matrix tile per $32\times8$-thread block."><code>constexpr int tile_width = 32;
+constexpr int block_rows = 8;
+
+__global__ void transpose_strided_write(const float* input,
+                                        float* output, int n) {
+  const int x = blockIdx.x * tile_width + threadIdx.x;
+  const int y = blockIdx.y * tile_width + threadIdx.y;
+  for (int j = 0; j &lt; tile_width; j += block_rows) {
+    // In a flat n-column matrix, (row, column) is row * n + column.
+    // Copy input(row=y+j, column=x) to output(row=x, column=y+j).
+    output[x * n + y + j] = input[(y + j) * n + x];
+  }
+}
+
+constexpr int n = 4096;
+const dim3 threads(tile_width, block_rows);       // (32, 8)
+const dim3 blocks(n / tile_width, n / tile_width); // (128, 128)
+transpose_strided_write&lt;&lt;&lt;blocks, threads&gt;&gt;&gt;(input, output, n);</code></pre>
+<p>The launch creates
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">128</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">128</span></span></span></span>
+blocks. One block covers one
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">32</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">32</span></span></span></span>
+tile with
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">32</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">8</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">256</span></span></span></span>
+threads. Each row of 32 threads is one warp. The loop values
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8389em;vertical-align:-0.1944em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">8</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">16</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">24</span></span></span></span>
+make each thread process four rows, so the 256 threads cover all
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">32</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">32</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1024</span></span></span></span>
+values in the tile.</p>
+<p>To inspect one warp, hold <code>threadIdx.y</code> and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span></span></span></span>
+fixed while <code>threadIdx.x</code> runs from 0 to 31. The variable
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>
+then increases by one from one thread to the next. Therefore</p>
+<ul>
+<li><p>the read index <code>(y + j) * n + x</code> increases by one, so
+the warp reads 32 adjacent floats;</p></li>
+<li><p>the write index <code>x * n + y + j</code> increases by
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">4096</span></span></span></span>,
+so consecutive threads write 4096 floats, or
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">16</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">KiB</span></span></span></span></span>,
+apart.</p></li>
+</ul>
+<p>The GPU serves the 32 adjacent reads with few memory requests. This
+pattern is called <em>coalesced access</em>. The writes are not
+adjacent. One warp writes 32 floats to rows separated by 16 KiB, so the
+GPU needs many write requests <span class="citation">[<a href="#ref-cuda-programming-guide">10</a>, <a href="#ref-cuda-best-practices">13</a>]</span>.</p>
+<p>The optimized kernel first reads adjacent values into shared memory.
+It then reads the shared array in the transposed direction and writes
+adjacent values to global memory. Shared memory changes the access
+direction between the coalesced global read and the coalesced global
+write.</p>
+<p>The extra shared-memory column is padding. Without it, the transposed
+read asks one part of shared memory for several different values at
+once, so those values are returned one after another. This is called a
+<em>shared-memory bank conflict</em>. Padding shifts the addresses so
+the values can be returned together <span class="citation">[<a href="#ref-cuda-best-practices">13</a>]</span>.</p>
+<pre class="CUDA" data-language="CUDA"
+data-basicstyle="\ttfamily\footnotesize"
+data-caption="Tiled transpose used in the experiment."><code>__global__ void transpose_tiled(const float* input, float* output, int n) {
+  // Use 33 columns so column reads use different shared-memory banks.
+  __shared__ float local[tile_width][tile_width + 1];
+  int x = blockIdx.x * tile_width + threadIdx.x;
+  int y = blockIdx.y * tile_width + threadIdx.y;
+  for (int j = 0; j &lt; tile_width; j += block_rows) {
+    // Adjacent threads read adjacent input columns into shared memory.
+    local[threadIdx.y + j][threadIdx.x] = input[(y + j) * n + x];
+  }
+  // Do not read the shared tile until every thread has finished writing it.
+  __syncthreads();
+  // Swap the block coordinates before writing the transposed square.
+  x = blockIdx.y * tile_width + threadIdx.x;
+  y = blockIdx.x * tile_width + threadIdx.y;
+  for (int j = 0; j &lt; tile_width; j += block_rows) {
+    // Read rows as columns; adjacent threads now write adjacent output values.
+    output[(y + j) * n + x] = local[threadIdx.x][threadIdx.y + j];
+  }
+}</code></pre>
+<p>In the first loop, the 32 threads read adjacent input values into
+shared memory. After all threads finish that write, the second loop
+reads the shared array in the other direction. Its output index,
+<code>(y + j) * n + x</code>, increases by one from thread to thread.
+Both global-memory operations now use adjacent addresses.</p>
+<p><strong>Measured result.</strong> On the office RTX 3090, the median
+of five process runs gave
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.495</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">ms</span></span></span></span></span>
+and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">271.295</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">GB/s</span></span></span></span></span>
+for the strided-write kernel, versus
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.165</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">ms</span></span></span></span></span>
+and
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">813.354</span><span class="mspace"> </span><span class="mord"><span class="mord mathrm">GB/s</span></span></span></span></span>
+for the tiled kernel. Each process run reported the mean of 20 timed
+launches after one warm-up launch. The tiled kernel was
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">3.00</span><span class="mord">×</span></span></span></span>
+faster because it replaced the far-apart global writes with adjacent
+writes. The raw output is in in the code repository.</p>
+<p><strong>What to change.</strong> Make consecutive threads access
+consecutive values in global memory. For a transpose, use shared memory
+to change the direction between the adjacent read and the adjacent
+write.</p>
+<h3 id="warp-divergence">Warp divergence</h3>
+<p>A warp executes one instruction for its 32 threads together. If some
+threads choose <code>branch_a</code> and others choose
+<code>branch_b</code>, the warp runs one branch and then the other. Only
+the threads that chose the current branch do work. If all 32 threads
+choose the same branch, the other branch is skipped. Running both
+branches because one warp contains both choices is called <em>warp
+divergence</em> <span class="citation">[<a href="#ref-cuda-programming-guide">10</a>]</span>.</p>
+<p>Both versions send half the threads to each function, and
+<code>branch_a</code> and <code>branch_b</code> perform equal amounts of
+arithmetic. Only the assignment of threads to functions changes. In the
+unoptimized kernel, neighboring thread indices alternate between the two
+functions.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Unoptimized.  One warp contains both branches."><code>// Adjacent thread indices alternate even, odd, even, odd, ...
+const bool take_a = (index &amp; 1) == 0;
+output[index] = take_a ? branch_a(input[index])
+                       : branch_b(input[index]);</code></pre>
+<p>The optimized kernel assigns one branch to a whole warp.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Optimized.  All 32 threads in one warp agree."><code>// index / warpSize is identical for all 32 threads in one warp.
+const bool take_a = ((index / warpSize) &amp; 1) == 0;
+output[index] = take_a ? branch_a(input[index])
+                       : branch_b(input[index]);</code></pre>
+<p>Figure <a href="#fig:warp-divergence" data-reference-type="ref"
+data-reference="fig:warp-divergence">11</a> shows how the two
+assignments change the work done by each warp without changing the
+number of calls to either function.</p>
+<figure id="fig:warp-divergence" data-latex-placement="htbp">
+<img src="/notes/cuda/warp-divergence.svg" alt="Warp execution with alternating branch choices." />
+<figcaption>With alternating choices, each warp runs
+<code>branch_a</code> and then <code>branch_b</code>. After equal
+choices are grouped, warp 0 runs only <code>branch_a</code> and warp 1
+runs only <code>branch_b</code>. Each row shows eight of the warp’s 32
+threads.</figcaption>
+</figure>
+<p><strong>What to change.</strong> When possible, group the work so all
+threads in one warp choose the same branch. Do not replace the branch
+with arithmetic unless the arithmetic replacement does less work.</p>
+<h3 id="atomic-contention">Atomic contention</h3>
+<p>Suppose two threads add 1 to the same counter. If both read the old
+value
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span>
+before either writes, both compute
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>
+and both write
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>.
+The final value is
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>
+instead of
+<span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">c</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span>:
+one increment is lost.</p>
+<p><code>atomicAdd(counter, 1)</code> prevents the lost increment by
+completing one update before another update to the same counter begins.
+The answer is correct, but many threads may wait for access to the
+counter. This wait is called <em>atomic contention</em> <span class="citation">[<a href="#ref-cuda-programming-guide">10</a>]</span>.</p>
+<p>In the following snippets, <code>index</code> is the thread’s global
+index and <code>count</code> is the number of events. The unoptimized
+kernel makes every valid thread add 1 directly to the same counter in
+GPU memory.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Every valid thread updates the same counter."><code>if (index &lt; count) {
+  // Wait for a turn, then add 1 to the counter in GPU memory.
+  atomicAdd(counter, 1ULL);
+}</code></pre>
+<p>The program uses 256 threads per block. Each thread first stores
+either 1 or 0 in the block’s shared memory. The block adds those 256
+values together. Thread 0 then adds the block’s total to
+<code>counter</code>. A block therefore calls <code>atomicAdd</code>
+once instead of as many as 256 times.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Add inside the block, then update the counter once."><code>// Reserve one shared-memory entry for each thread.
+__shared__ unsigned int local[256];
+const int index = blockIdx.x * blockDim.x + threadIdx.x;
+// Store 1 for a valid event and 0 otherwise.
+local[threadIdx.x] = index &lt; count ? 1U : 0U;
+__syncthreads();
+// Add pairs of entries until local[0] holds the block total.
+for (int offset = blockDim.x / 2; offset &gt; 0; offset /= 2) {
+  if (threadIdx.x &lt; offset) {
+    local[threadIdx.x] += local[threadIdx.x + offset];
+  }
+  __syncthreads();
+}
+if (threadIdx.x == 0) {
+  // Thread 0 adds the block total to the global counter once.
+  atomicAdd(counter, (unsigned long long)local[0]);
+}</code></pre>
+<p>Figure <a href="#fig:atomic-contention" data-reference-type="ref"
+data-reference="fig:atomic-contention">12</a> compares the two
+versions.</p>
+<figure id="fig:atomic-contention" data-latex-placement="htbp">
+<img src="/notes/cuda/atomic-contention.svg" alt="Direct and block-reduced atomic updates." />
+<figcaption>Four valid threads are shown for each block. The
+direct-update version makes eight <code>atomicAdd</code> calls. The
+block-sum version adds inside each block and makes only two calls. The
+supplied code uses 256 threads per block.</figcaption>
+</figure>
+<p><strong>What to change.</strong> Add values together inside each
+block, then update the counter once per block. If every thread truly
+must update the same counter separately, changing the number of blocks
+or threads cannot remove the wait.</p>
+<h3 id="memory-latency">Memory latency</h3>
+<p>The example uses a chain of memory reads:</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Each read supplies the index for the next read."><code>int position = starting_position;
+for (int step = 0; step &lt; steps; ++step) {
+  // next[position] must return before the next loop iteration can begin.
+  position = next[position];
+}</code></pre>
+<p>The value returned by <code>next[position]</code> becomes the index
+used by the next iteration. The thread cannot begin that next read
+early. It must wait for the current read to return. The time between
+starting a read and receiving its value is called <em>memory
+latency</em>.</p>
+<p>While one warp waits, the SM can run another warp. The SM becomes
+idle only if all warps currently on it are waiting. The two programs
+perform the same reads with the same total number of threads; only the
+block size changes.</p>
+<div class="center">
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"></th>
+<th style="text-align: center;">Threads per block</th>
+<th style="text-align: center;">Warps supplied by each block</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Unoptimized</td>
+<td style="text-align: center;">32</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: left;">Optimized</td>
+<td style="text-align: center;">256</td>
+<td style="text-align: center;">8</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>An SM can hold only a limited number of blocks at once. With
+32-thread blocks, it can reach that block limit while holding relatively
+few warps. The 256-thread blocks provide more warps that can run while
+another warp waits <span class="citation">[<a href="#ref-kirkhwu2010">9</a>, <a href="#ref-ampere-tuning-guide">11</a>]</span>. Figure <a
+href="#fig:latency-hiding" data-reference-type="ref"
+data-reference="fig:latency-hiding">13</a> shows the idea; it does not
+show the exact number of warps on an SM.</p>
+<figure id="fig:latency-hiding" data-latex-placement="htbp">
+<img src="/notes/cuda/latency-hiding.svg" alt="Ready warps hiding memory latency on a streaming multiprocessor." />
+<figcaption>If every available warp is waiting, the SM is idle. Another
+ready warp gives the SM work to run during the wait. The figure is
+schematic.</figcaption>
+</figure>
+<p><strong>What to change.</strong> Choose a block size that lets each
+SM hold enough warps to provide other work during a memory wait. Nsight
+Compute calls the fraction of the SM’s thread capacity in use
+<em>occupancy</em>. Maximum occupancy is not the goal: once a ready warp
+is usually available, adding more warps may not make the kernel
+faster.</p>
+<h3 id="kernel-launch-overhead">Kernel launch overhead</h3>
+<p>The CPU and CUDA driver need time to submit each kernel. The CPU does
+not wait for the submitted kernel to finish. The time needed to submit
+one kernel is called <em>launch overhead</em>. If each kernel finishes
+before the CPU can submit the next kernel, the GPU sits idle between
+kernels. Adding blocks to the tiny kernels does not remove the gaps
+between launches.</p>
+<p>The supplied example uses 10,000 steps to make the launch cost easy
+to see. The step count is an example parameter, not a measured hardware
+limit. The unoptimized CPU loop submits one kernel per step.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Unoptimized.  Pay the launch cost on every step."><code>// The CPU submits a separate kernel launch for every tiny step.
+for (int step = 0; step &lt; 10000; ++step) {
+  one_tiny_step&lt;&lt;&lt;1, 32&gt;&gt;&gt;(value);
+}</code></pre>
+<p>The optimized version submits once and moves the loop into the
+kernel.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Optimized.  One launch performs all 10,000 steps."><code>__global__ void fused_tiny_steps(float* value, int steps) {
+  // One thread performs the same 10,000 updates inside one kernel launch.
+  if (blockIdx.x == 0 &amp;&amp; threadIdx.x == 0) {
+    float result = value[0];
+    for (int step = 0; step &lt; steps; ++step) {
+      result += 1.0f;
+    }
+    value[0] = result;
+  }
+}
+
+// The CPU now pays the launch cost once.
+fused_tiny_steps&lt;&lt;&lt;1, 32&gt;&gt;&gt;(value, 10000);</code></pre>
+<p>Figure <a href="#fig:launch-overhead" data-reference-type="ref"
+data-reference="fig:launch-overhead">14</a> shows what the CPU and GPU
+do over time in the two versions.</p>
+<figure id="fig:launch-overhead" data-latex-placement="htbp">
+<img src="/notes/cuda/launch-overhead.svg" alt="GPU idle intervals between repeated small kernel launches." />
+<figcaption>With repeated tiny launches, the GPU is idle in the red
+intervals while waiting for the CPU to submit more work. The combined
+version pays for one launch and runs one longer kernel.</figcaption>
+</figure>
+<p><strong>What to change.</strong> Put several small steps in one
+kernel when possible. A CUDA Graph records a repeated group of launches
+and lets the CPU submit the group with less repeated work. Nsight
+Systems shows the CPU launch calls and the idle gaps on the GPU timeline
+<span class="citation">[<a href="#ref-cuda-graphs2021">15</a>]</span>.</p>
+<h3 id="host-device-transfer-overhead">Host-device transfer
+overhead</h3>
+<p>Copying an array between CPU and GPU memory can take longer than
+running a kernel on the array. A program that copies both inputs to the
+GPU and the result back on every step may therefore spend most of its
+time copying. The input and output copies usually cross Peripheral
+Component Interconnect Express (PCIe), not the GPU’s own device-memory
+connection. The copy time is called <em>host-device transfer
+overhead</em>. Measure the copies as well as the kernel.</p>
+<p>The supplied programs choose 20 steps. The unoptimized CPU loop makes
+three copies per step across PCIe.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Unoptimized.  Transfer on every iteration."><code>for (int step = 0; step &lt; 20; ++step) {
+  // Move both inputs to the GPU again on every iteration.
+  cudaMemcpy(x, host_x, bytes, cudaMemcpyHostToDevice);
+  cudaMemcpy(y, host_y, bytes, cudaMemcpyHostToDevice);
+  vector_add&lt;&lt;&lt;blocks, threads&gt;&gt;&gt;(x, y, output, count);
+  // Move the result back before starting the next iteration.
+  cudaMemcpy(host_output, output, bytes, cudaMemcpyDeviceToHost);
+}</code></pre>
+<p>The optimized host code leaves the arrays on the GPU between kernel
+launches.</p>
+<pre class="CUDA" data-language="CUDA" data-numbers="none"
+data-caption="Optimized.  Transfer inputs and output only once."><code>// Copy the inputs once and leave them in GPU memory.
+cudaMemcpy(x, host_x, bytes, cudaMemcpyHostToDevice);
+cudaMemcpy(y, host_y, bytes, cudaMemcpyHostToDevice);
+for (int step = 0; step &lt; 20; ++step) {
+  vector_add&lt;&lt;&lt;blocks, threads&gt;&gt;&gt;(x, y, output, count);
+}
+// Copy the final result back after all 20 launches.
+cudaMemcpy(host_output, output, bytes, cudaMemcpyDeviceToHost);</code></pre>
+<p>Figure <a href="#fig:transfer-bound" data-reference-type="ref"
+data-reference="fig:transfer-bound">15</a> shows which transfers
+disappear when the arrays remain on the GPU between launches.</p>
+<figure id="fig:transfer-bound" data-latex-placement="htbp">
+<img src="/notes/cuda/transfer-bound.svg" alt="Repeated host-device transfers compared with keeping data on the GPU." />
+<figcaption>Keeping the arrays in GPU memory removes the repeated
+transfers between consecutive kernel launches.</figcaption>
+</figure>
+<p>Both programs use the same kind of CPU memory. The only difference
+being tested is how often the arrays are copied.</p>
+<p><strong>What to change.</strong> Leave arrays in GPU memory while
+consecutive kernels use them. Copy back only the values the CPU actually
+needs <span class="citation">[<a href="#ref-cuda-best-practices">13</a>]</span>.</p>
+<section class="references" aria-labelledby="sources">
+<h2 id="sources">Sources</h2>
+<p>The CUDA Refresher posts supply the CPU and GPU model, library map,
+and programming model. NVIDIA’s updated CUDA introduction supplies the
+array-addition example. Betcke and Scroggs explain the connection
+between warps and SMs. NVIDIA’s Ampere article supplies the GA100 and
+A100 architecture. NVIDIA’s GA102 whitepaper and RTX 3090 specifications
+supply the consumer-GPU comparison.</p>
+<p>He supplies the three names compute-bound, memory-bound, and
+overhead-bound. Current NVIDIA documentation supplies the tool names and
+CUDA behavior used in Section <a href="#sec:gpu-underutilization"
+data-reference-type="ref"
+data-reference="sec:gpu-underutilization">3</a>. Kirk and Hwu’s textbook
+explains why an SM can run another warp while one warp waits for
+memory.</p>
+<p>Williams, Waterman, and Patterson supply the roofline model. The
+saved RTX 3090 measurement record supplies the four points in Figure <a
+href="#fig:measured-roofline" data-reference-type="ref"
+data-reference="fig:measured-roofline">9</a>.</p>
+<p><strong>Further reading.</strong> NVIDIA’s <a
+href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/">CUDA C++
+Programming Guide</a> and <a
+href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/">CUDA
+C++ Best Practices Guide</a> are the natural next references.</p>
+
+<ol>
+<li id="ref-gupta2020origins">Pradeep Gupta. <em>CUDA Refresher: Reviewing the Origins of GPU
+Computing</em>. NVIDIA Technical Blog, April 23, 2020. <a
+href="https://developer.nvidia.com/blog/cuda-refresher-reviewing-the-origins-of-gpu-computing/"
+class="uri">https://developer.nvidia.com/blog/cuda-refresher-reviewing-the-origins-of-gpu-computing/</a>.</li>
+<li id="ref-gupta2020ecosystem">Pradeep Gupta. <em>CUDA Refresher: The GPU Computing Ecosystem</em>.
+NVIDIA Technical Blog, May 21, 2020. <a
+href="https://developer.nvidia.com/blog/cuda-refresher-the-gpu-computing-ecosystem/"
+class="uri">https://developer.nvidia.com/blog/cuda-refresher-the-gpu-computing-ecosystem/</a>.</li>
+<li id="ref-gupta2020model">Pradeep Gupta. <em>CUDA Refresher: The CUDA Programming Model</em>.
+NVIDIA Technical Blog, June 26, 2020. <a
+href="https://developer.nvidia.com/blog/cuda-refresher-the-cuda-programming-model/"
+class="uri">https://developer.nvidia.com/blog/cuda-refresher-the-cuda-programming-model/</a>.</li>
+<li id="ref-ampere2020">Ronny Krashinsky, Olivier Giroux, Stephen Jones, Nick Stam, and
+Sridhar Ramaswamy. <em>NVIDIA Ampere Architecture In-Depth</em>. NVIDIA
+Technical Blog, May 14, 2020. <a
+href="https://developer.nvidia.com/blog/nvidia-ampere-architecture-in-depth/"
+class="uri">https://developer.nvidia.com/blog/nvidia-ampere-architecture-in-depth/</a>.</li>
+<li id="ref-ga102whitepaper">NVIDIA Corporation. <em>NVIDIA Ampere GA102 GPU Architecture</em>.
+Architecture whitepaper, version 2.1, 2021. <a
+href="https://www.nvidia.com/content/PDF/nvidia-ampere-ga-102-gpu-architecture-whitepaper-v2.1.pdf"
+class="uri">https://www.nvidia.com/content/PDF/nvidia-ampere-ga-102-gpu-architecture-whitepaper-v2.1.pdf</a>.
+Accessed August 26, 2026.</li>
+<li id="ref-rtx3090specs">NVIDIA Corporation. <em>GeForce RTX 3090 Family Specifications</em>.
+<a
+href="https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3090-3090ti/"
+class="uri">https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3090-3090ti/</a>.
+Accessed August 26, 2026.</li>
+<li id="ref-williams2009roofline">Samuel Williams, Andrew Waterman, and David Patterson. <em>Roofline:
+An Insightful Visual Performance Model for Multicore Architectures</em>.
+Communications of the ACM, 52(4):65–76, April 2009. <a
+href="https://doi.org/10.1145/1498765.1498785"
+class="uri">https://doi.org/10.1145/1498765.1498785</a>.</li>
+<li id="ref-roofline-measurement">Measurement record. <em>Roofline Measurements on the Office RTX
+3090</em>. September 1, 2026. Raw output and derivation in <a
+href="https://github.com/HaowuDuan/cuda-example-for-note"
+class="uri">https://github.com/HaowuDuan/cuda-example-for-note</a>,
+.</li>
+<li id="ref-kirkhwu2010">David B. Kirk and Wen-mei W. Hwu. <em>Programming Massively Parallel
+Processors: A Hands-on Approach</em>. Morgan Kaufmann, 2010. ISBN
+978-0-12-381472-2.</li>
+<li id="ref-cuda-programming-guide">NVIDIA Corporation. <em>CUDA Programming Guide</em>. <a
+href="https://docs.nvidia.com/cuda/cuda-programming-guide/index.html"
+class="uri">https://docs.nvidia.com/cuda/cuda-programming-guide/index.html</a>.
+Accessed August 24, 2026.</li>
+<li id="ref-ampere-tuning-guide">NVIDIA Corporation. <em>NVIDIA Ampere GPU Architecture Tuning
+Guide</em>. <a
+href="https://docs.nvidia.com/cuda/ampere-tuning-guide/index.html"
+class="uri">https://docs.nvidia.com/cuda/ampere-tuning-guide/index.html</a>.
+Accessed September 1, 2026.</li>
+<li id="ref-cuda-memory-model">NVIDIA Corporation. <em>CUDA C++ Memory Model</em>. <a
+href="https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/cuda-cpp-memory-model.html"
+class="uri">https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/cuda-cpp-memory-model.html</a>.
+Accessed August 24, 2026.</li>
+<li id="ref-cuda-best-practices">NVIDIA Corporation. <em>CUDA C++ Best Practices Guide</em>. <a
+href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html"
+class="uri">https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html</a>.
+Accessed August 26, 2026.</li>
+<li id="ref-nsightcompute-profiling">NVIDIA Corporation. <em>Nsight Compute Profiling Guide</em>. <a
+href="https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html"
+class="uri">https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html</a>.
+Accessed August 26, 2026.</li>
+<li id="ref-cuda-graphs2021">NVIDIA Corporation. <em>Employing CUDA Graphs in a Dynamic
+Environment</em>. NVIDIA Technical Blog, October 21, 2021. <a
+href="https://developer.nvidia.com/blog/employing-cuda-graphs-in-a-dynamic-environment/"
+class="uri">https://developer.nvidia.com/blog/employing-cuda-graphs-in-a-dynamic-environment/</a>.
+Accessed August 26, 2026.</li>
+<li id="ref-cudax2026">NVIDIA Corporation. <em>NVIDIA CUDA-X Libraries</em>. <a
+href="https://developer.nvidia.com/cuda/cuda-x-libraries"
+class="uri">https://developer.nvidia.com/cuda/cuda-x-libraries</a>.
+Accessed August 24, 2026.</li>
+<li id="ref-nsightsystems2026">NVIDIA Corporation. <em>NVIDIA Nsight Systems</em>. <a
+href="https://developer.nvidia.com/nsight-systems"
+class="uri">https://developer.nvidia.com/nsight-systems</a>. Accessed
+August 24, 2026.</li>
+<li id="ref-nsightcompute2026">NVIDIA Corporation. <em>NVIDIA Nsight Compute</em>. <a
+href="https://developer.nvidia.com/nsight-compute/"
+class="uri">https://developer.nvidia.com/nsight-compute/</a>. Accessed
+August 24, 2026.</li>
+<li id="ref-computesanitizer2026">NVIDIA Corporation. <em>Compute Sanitizer</em>. <a
+href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html"
+class="uri">https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html</a>.
+Accessed August 24, 2026.</li>
+</ol>
+</section>

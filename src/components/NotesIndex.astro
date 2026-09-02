@@ -26,7 +26,13 @@ const { title, eyebrow, description, basePath, chapters } = Astro.props;
       <ol class="editorial-list">
         {chapters.map(chapter => (
           <li data-status={chapter.data.status ?? 'finished'}>
-            <span class="date">{chapter.data.chapterNumber ? `Chapter ${chapter.data.chapterNumber}` : 'Note'}</span>
+            <span class="date">
+              {chapter.data.appendixLetter
+                ? `Appendix ${chapter.data.appendixLetter}`
+                : chapter.data.chapterNumber
+                  ? `Chapter ${chapter.data.chapterNumber}`
+                  : 'Note'}
+            </span>
             <div>
               <h3><a href={`${basePath}${chapter.id}/`}>{chapter.data.title}</a></h3>
               {chapter.data.description && <p>{chapter.data.description}</p>}
