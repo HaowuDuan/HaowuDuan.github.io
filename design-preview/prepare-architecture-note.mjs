@@ -17,6 +17,9 @@ const figureAltText = new Map([
   ['fig:dense-versus-moe', 'Comparison of a dense feed-forward network with a sparsely routed mixture-of-experts layer.'],
   ['fig:swiglu-expert', 'The full SwiGLU expert map and its component projections and activation.'],
   ['fig:moe-topk-example', 'A top-two routing example in which one token selects two of four experts.'],
+  ['fig:elman-cell', 'An Elman recurrent cell combining the previous state and current input before a nonlinear update.'],
+  ['fig:lstm-cell', 'An LSTM cell updating its memory state before exposing the new hidden state.'],
+  ['fig:gru-cell', 'A GRU cell forming a candidate state and mixing it with the previous state.'],
 ]);
 
 for (const [label, alt] of figureAltText) {

@@ -63,7 +63,7 @@ title: Modern LLM Architecture
 order: 1
 chapterNumber: 1
 math: true
-description: Attention, normalization, and sparse mixture-of-experts layers in decoder-only Transformers
+description: Attention, recurrent sequence models, linear attention, normalization, and sparse mixture-of-experts layers
 sections:
   - title: Attention
     id: attention
@@ -74,7 +74,6 @@ sections:
   - title: Linear Attention and RNN
     id: linear-attention-and-rnn
     label: "1.3"
-    status: todo
 ---`;
 
 const cudaFrontmatter = `---
@@ -143,6 +142,9 @@ await Promise.all([
     'dense-versus-moe.svg',
     'swiglu-expert.svg',
     'moe-topk-example.svg',
+    'elman-cell.svg',
+    'lstm-cell.svg',
+    'gru-cell.svg',
   ].map(filename =>
     copyFile(
       resolve(previewDirectory, 'assets/architecture', filename),

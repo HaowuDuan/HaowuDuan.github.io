@@ -20,8 +20,15 @@ node render-cuda-figures.mjs \
   ../note_drafts/cuda_note/nvidia_cuda_intro_reference.tex \
   assets/cuda
 
-node render-architecture-figures.mjs \
+architecture_source_file="$(mktemp)"
+test -n "${architecture_source_file:?}"
+node prepare-architecture-source.mjs \
   ../note_drafts/attention_moe/attention_moe.tex \
+  ../note_drafts/rnn_linear_attention_section1.tex \
+  "${architecture_source_file:?}"
+
+node render-architecture-figures.mjs \
+  "${architecture_source_file:?}" \
   assets/architecture
 
 mkdir -p vendor/katex/fonts
@@ -99,7 +106,7 @@ node prepare-cuda-note.mjs \
   cuda-notes.html \
   ../note_drafts/cuda_note/nvidia_cuda_intro_reference.tex
 
-pandoc ../note_drafts/attention_moe/attention_moe.tex \
+pandoc "${architecture_source_file:?}" \
   --from=latex \
   --to=html5 \
   --mathml \

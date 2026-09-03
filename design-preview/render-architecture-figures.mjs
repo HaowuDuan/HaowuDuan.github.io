@@ -51,8 +51,8 @@ const figures = [...source.matchAll(/\\begin\{figure\}(?:\[[^\]]*\])?([\s\S]*?)\
     return { label, tikz };
   });
 
-if (figures.length !== 8) {
-  throw new Error(`Expected 8 architecture figures, found ${figures.length}`);
+if (figures.length !== 11) {
+  throw new Error(`Expected 11 architecture figures, found ${figures.length}`);
 }
 
 const temporaryDirectory = await mkdtemp(join(tmpdir(), 'architecture-figures-'));
@@ -60,6 +60,7 @@ await mkdir(outputDirectory, { recursive: true });
 
 const preamble = String.raw`\documentclass[tikz,border=8pt]{standalone}
 \usepackage{amsmath,amssymb,mathtools}
+\usepackage{bm}
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
