@@ -22,6 +22,8 @@ const architectureBody = (await extractArticle('modern-llm-architecture.html'))
   .replaceAll('assets/architecture/', '/notes/architecture/');
 const cudaBody = (await extractArticle('cuda-notes.html'))
   .replaceAll('assets/cuda/', '/notes/cuda/');
+const rlBody = (await extractArticle('rl-notes.html'))
+  .replaceAll('assets/rl/', '/notes/rl/');
 
 const diffusionFrontmatter = `---
 title: Diffusion Models and Path Integrals
@@ -94,6 +96,32 @@ sections:
     label: "1.3"
 ---`;
 
+const rlFrontmatter = `---
+title: Reinforcement Learning for LLM Fine-Tuning from the Path-Integral Perspective
+order: 1
+math: true
+description: Policy gradients, PPO, GRPO, and preference optimization for LLM post-training, developed from path measures
+sections:
+  - title: Introduction
+    id: introduction
+    label: "1."
+  - title: The LLM Post-Training Problem
+    id: the-llm-post-training-problem
+    label: "2."
+  - title: Online Policy-Gradient Methods
+    id: online-policy-gradient-methods
+    label: "3."
+  - title: Proximal Policy Optimization
+    id: proximal-policy-optimization
+    label: "4."
+  - title: Group-Relative Policy Optimization
+    id: group-relative-policy-optimization
+    label: "5."
+  - title: Online and Offline Training
+    id: online-and-offline-training
+    label: "6."
+---`;
+
 await Promise.all([
   writeFile(
     resolve(repositoryRoot, 'src/content/diffusion-notes/diffusion-models-and-path-integrals.md'),
@@ -111,9 +139,14 @@ await Promise.all([
     resolve(repositoryRoot, 'src/content/gpu-notes/cuda.md'),
     `${cudaFrontmatter}\n\n${cudaBody}\n`,
   ),
+  writeFile(
+    resolve(repositoryRoot, 'src/content/rl-notes/introduction.md'),
+    `${rlFrontmatter}\n\n${rlBody}\n`,
+  ),
   mkdir(resolve(repositoryRoot, 'public/notes/optimization'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/architecture'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/cuda'), { recursive: true }),
+  mkdir(resolve(repositoryRoot, 'public/notes/rl'), { recursive: true }),
 ]);
 
 await Promise.all([
@@ -173,6 +206,10 @@ await Promise.all([
       resolve(repositoryRoot, 'public/notes/cuda', filename),
     ),
   ),
+  copyFile(
+    resolve(previewDirectory, 'assets/rl/actor-critic-interface.svg'),
+    resolve(repositoryRoot, 'public/notes/rl/actor-critic-interface.svg'),
+  ),
 ]);
 
-process.stdout.write('Exported the validated diffusion, architecture, conceptual training, and CUDA previews to Astro content.\n');
+process.stdout.write('Exported the validated diffusion, architecture, conceptual training, CUDA, and RL previews to Astro content.\n');

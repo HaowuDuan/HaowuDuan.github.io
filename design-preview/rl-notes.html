@@ -1,29 +1,131 @@
----
-title: Reinforcement Learning for LLM Fine-Tuning from the Path-Integral Perspective
-order: 1
-math: true
-description: Policy gradients, PPO, GRPO, and preference optimization for LLM post-training, developed from path measures
-sections:
-  - title: Introduction
-    id: introduction
-    label: "1."
-  - title: The LLM Post-Training Problem
-    id: the-llm-post-training-problem
-    label: "2."
-  - title: Online Policy-Gradient Methods
-    id: online-policy-gradient-methods
-    label: "3."
-  - title: Proximal Policy Optimization
-    id: proximal-policy-optimization
-    label: "4."
-  - title: Group-Relative Policy Optimization
-    id: group-relative-policy-optimization
-    label: "5."
-  - title: Online and Offline Training
-    id: online-and-offline-training
-    label: "6."
----
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Policy gradients, PPO, GRPO, and preference optimization for LLM post-training, developed from path measures">
+    <title>Reinforcement Learning for LLM Fine-Tuning — Design Preview</title>
+    <link rel="stylesheet" href="vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="preview.js"></script>
+  </head>
+  <body>
+    <div class="review-bar">Local design review · reinforcement-learning note · not published</div>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">about</a>
+          <a href="blog.html">blog</a>
+          <a href="publications.html">publications</a>
+          <a href="projects.html">projects</a>
+          <a href="repositories.html">repositories</a>
+          <a href="cv.html">CV</a>
+          <a href="notes.html" aria-current="page">notes</a>
+        </nav>
+      </div>
+    </header>
 
+    <nav class="notes-subnav" aria-label="Note collections">
+      <div class="notes-subnav__inner">
+        <a href="notes.html">LLM</a>
+        <a href="diffusion-notes.html">Diffusion Models</a>
+        <a href="rl-notes.html" aria-current="page">Reinforcement Learning</a>
+        <a href="cuda-notes.html#gpu-and-cuda">GPUs</a>
+      </div>
+    </nav>
+
+    <main class="page-shell book-layout">
+      <aside class="book-sidebar" aria-label="Reinforcement-learning note contents" data-article-toc>
+        <h2>Contents</h2>
+<ul>
+<li><a href="#introduction">Introduction</a>
+<ul>
+<li><a href="#some-basic-definitions">Some basic definitions</a></li>
+<li><a href="#reward-and-return">Reward and
+return</a></li>
+<li><a href="#policy-gradient">Policy
+gradient</a></li>
+</ul></li>
+<li><a href="#the-llm-post-training-problem">The LLM Post-Training
+Problem</a></li>
+<li><a href="#online-policy-gradient-methods">Online Policy-Gradient
+Methods</a>
+<ul>
+<li><a href="#reinforce">REINFORCE</a></li>
+<li><a href="#baselines-and-advantage-estimation">Baselines and advantage
+estimation</a></li>
+<li><a href="#importance-sampling-and-policy-reuse">Importance sampling and
+policy reuse</a></li>
+</ul></li>
+<li><a href="#proximal-policy-optimization">Proximal Policy
+Optimization</a></li>
+<li><a href="#group-relative-policy-optimization">Group-Relative Policy
+Optimization</a>
+<ul>
+<li><a href="#group-relative-advantage">Group-relative advantage</a></li>
+<li><a href="#the-token-level-clipped-objective">The token-level clipped
+objective</a></li>
+</ul></li>
+<li><a href="#online-and-offline-training">Online and Offline Training</a>
+<ul>
+<li><a href="#supervised-fine-tuning">Supervised fine-tuning</a></li>
+<li><a href="#preference-data-and-reward-modeling">Preference data and reward
+modeling</a></li>
+<li><a href="#direct-preference-optimization">Direct Preference
+Optimization</a></li>
+</ul></li>
+</ul>
+      </aside>
+
+      <div class="note-content">
+        <details class="book-mobile-nav" data-responsive-details data-article-toc>
+          <summary>Contents · Reinforcement Learning for LLM Fine-Tuning</summary>
+<ul>
+<li><a href="#introduction">Introduction</a>
+<ul>
+<li><a href="#some-basic-definitions">Some basic definitions</a></li>
+<li><a href="#reward-and-return">Reward and
+return</a></li>
+<li><a href="#policy-gradient">Policy
+gradient</a></li>
+</ul></li>
+<li><a href="#the-llm-post-training-problem">The LLM Post-Training
+Problem</a></li>
+<li><a href="#online-policy-gradient-methods">Online Policy-Gradient
+Methods</a>
+<ul>
+<li><a href="#reinforce">REINFORCE</a></li>
+<li><a href="#baselines-and-advantage-estimation">Baselines and advantage
+estimation</a></li>
+<li><a href="#importance-sampling-and-policy-reuse">Importance sampling and
+policy reuse</a></li>
+</ul></li>
+<li><a href="#proximal-policy-optimization">Proximal Policy
+Optimization</a></li>
+<li><a href="#group-relative-policy-optimization">Group-Relative Policy
+Optimization</a>
+<ul>
+<li><a href="#group-relative-advantage">Group-relative advantage</a></li>
+<li><a href="#the-token-level-clipped-objective">The token-level clipped
+objective</a></li>
+</ul></li>
+<li><a href="#online-and-offline-training">Online and Offline Training</a>
+<ul>
+<li><a href="#supervised-fine-tuning">Supervised fine-tuning</a></li>
+<li><a href="#preference-data-and-reward-modeling">Preference data and reward
+modeling</a></li>
+<li><a href="#direct-preference-optimization">Direct Preference
+Optimization</a></li>
+</ul></li>
+</ul>
+        </details>
+        <header class="article-header">
+          <p class="eyebrow">Reinforcement Learning · Technical Note</p>
+          <h1 class="article-title">Reinforcement Learning for LLM Fine-Tuning from the Path-Integral Perspective</h1>
+          <p class="article-deck">Policy gradients, PPO, GRPO, and preference optimization for LLM post-training, developed from path measures.</p>
+        </header>
+        <article class="prose" data-linked-headings>
 <h2 id="introduction">Introduction</h2>
 <h3 id="some-basic-definitions">Some basic definitions</h3>
 <p>We first identify the objects involved in reinforcement learning.</p>
@@ -372,7 +474,7 @@ Figure <a href="#fig:actor-critic-interface"
 data-reference="fig:actor-critic-interface">1</a> shows a separate-model
 implementation.</p>
 <figure id="fig:actor-critic-interface">
-<img src="/notes/rl/actor-critic-interface.svg" alt="A fixed prompt-and-response prefix feeding separate policy and value transformers, which produce a token distribution and scalar value estimate." />
+<img src="assets/rl/actor-critic-interface.svg" alt="A fixed prompt-and-response prefix feeding separate policy and value transformers, which produce a token distribution and scalar value estimate." />
 <figcaption>A separate-model actor–critic implementation. The policy
 transformer returns the token distribution, and the value transformer
 returns the scalar critic estimate.</figcaption>
@@ -1017,3 +1119,19 @@ Therefore
 href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
+        </article>
+        <nav class="chapter-footer" aria-label="Note-set navigation">
+          <a href="diffusion-notes.html">← Diffusion Models</a>
+          <a href="cuda-notes.html">CUDA →</a>
+        </nav>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>Draft note · local preview only</span>
+        <a href="notes.html">LLM notes</a>
+      </div>
+    </footer>
+  </body>
+</html>

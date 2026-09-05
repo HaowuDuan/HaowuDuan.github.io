@@ -12,6 +12,7 @@ interface Props {
 
 const { title, description = '', math = false } = Astro.props;
 const fullTitle = title === 'Haowu Duan' ? title : `${title} | Haowu Duan`;
+const socialImage = new URL('/og.png', Astro.site ?? Astro.url.origin).toString();
 void math;
 ---
 
@@ -23,6 +24,14 @@ void math;
   <meta name="generator" content={Astro.generator} />
   <title>{fullTitle}</title>
   {description && <meta name="description" content={description} />}
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={fullTitle} />
+  {description && <meta property="og:description" content={description} />}
+  <meta property="og:image" content={socialImage} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={fullTitle} />
+  {description && <meta name="twitter:description" content={description} />}
+  <meta name="twitter:image" content={socialImage} />
   <link rel="icon" href="/favicon.svg" />
   <script is:inline>
     const savedTheme = localStorage.getItem('theme');

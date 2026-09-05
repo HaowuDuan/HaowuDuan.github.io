@@ -31,6 +31,10 @@ node render-architecture-figures.mjs \
   "${architecture_source_file:?}" \
   assets/architecture
 
+node render-rl-figure.mjs \
+  ../note_drafts/rl_for_llm_finetuning.tex \
+  assets/rl
+
 mkdir -p vendor/katex/fonts
 cp ../node_modules/katex/dist/katex.min.css vendor/katex/katex.min.css
 cp ../node_modules/katex/dist/fonts/* vendor/katex/fonts/
@@ -106,6 +110,19 @@ node prepare-cuda-note.mjs \
   cuda-notes.html \
   ../note_drafts/cuda_note/nvidia_cuda_intro_reference.tex
 
+pandoc ../note_drafts/rl_for_llm_finetuning.tex \
+  --from=latex \
+  --to=html5 \
+  --mathml \
+  --toc \
+  --toc-depth=3 \
+  --shift-heading-level-by=1 \
+  --template=rl-notes-template.html \
+  --output=rl-notes.html
+node prepare-rl-note.mjs \
+  rl-notes.html \
+  ../note_drafts/rl_for_llm_finetuning.tex
+
 pandoc "${architecture_source_file:?}" \
   --from=latex \
   --to=html5 \
@@ -119,4 +136,4 @@ pandoc "${architecture_source_file:?}" \
   --output=modern-llm-architecture.html
 node prepare-architecture-note.mjs modern-llm-architecture.html
 
-node render-katex.mjs article.html notes.html faster-training.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html
+node render-katex.mjs article.html notes.html faster-training.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html rl-notes.html
