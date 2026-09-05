@@ -1,8 +1,8 @@
 ---
-title: Reinforcement Learning for LLM Fine-Tuning from the Path-Integral Perspective
+title: Reinforcement Learning
 order: 1
 math: true
-description: Policy gradients, PPO, GRPO, and preference optimization for LLM post-training, developed from path measures
+description: We use LLM fine-tuning as an example and context.
 sections:
   - title: Introduction
     id: introduction
