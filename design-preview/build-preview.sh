@@ -35,6 +35,10 @@ node render-rl-figure.mjs \
   ../note_drafts/rl_for_llm_finetuning.tex \
   assets/rl
 
+node render-data-figures.mjs \
+  ../note_drafts/data.tex \
+  assets/pre-training
+
 mkdir -p vendor/katex/fonts
 cp ../node_modules/katex/dist/katex.min.css vendor/katex/katex.min.css
 cp ../node_modules/katex/dist/fonts/* vendor/katex/fonts/
@@ -123,6 +127,18 @@ node prepare-rl-note.mjs \
   rl-notes.html \
   ../note_drafts/rl_for_llm_finetuning.tex
 
+pandoc ../note_drafts/data.tex \
+  --from=latex \
+  --to=html5 \
+  --standalone \
+  --mathml \
+  --shift-heading-level-by=1 \
+  --metadata=title:"Pre-Training" \
+  --output=pre-training.html
+node prepare-data-note.mjs \
+  pre-training.html \
+  ../note_drafts/data.tex
+
 pandoc "${architecture_source_file:?}" \
   --from=latex \
   --to=html5 \
@@ -136,4 +152,4 @@ pandoc "${architecture_source_file:?}" \
   --output=modern-llm-architecture.html
 node prepare-architecture-note.mjs modern-llm-architecture.html
 
-node render-katex.mjs article.html notes.html faster-training.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html rl-notes.html
+node render-katex.mjs article.html notes.html faster-training.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html rl-notes.html pre-training.html

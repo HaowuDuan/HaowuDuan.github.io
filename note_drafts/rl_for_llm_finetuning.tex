@@ -38,20 +38,20 @@ We first identify the objects involved in reinforcement learning.
 
     \item A stationary policy \(\pi\) is a global rule that assigns a
     distribution of actions to each state.  Associate the action \(a_t\)
-    with the operator \(\hat a_t\).  Then
+    with the operator \(\widehat{a}_t\).  Then
 \end{enumerate}
 
 \begin{equation}
     \begin{split}
-    \hat\pi|S_t\rangle
-    &=\int da_t\;\pi(a_t\mid S_t)\hat a_t|S_t\rangle\\
-    &\equiv\hat\pi(S_t)|S_t\rangle,
+    \widehat{\pi}|S_t\rangle
+    &=\int da_t\;\pi(a_t\mid S_t)\widehat{a}_t|S_t\rangle\\
+    &\equiv\widehat{\pi}(S_t)|S_t\rangle,
     \end{split}
     \label{eq:policy-operator}
 \end{equation}
 
 where
-\(\hat\pi(S_t)=\int da_t\,\pi(a_t\mid S_t)\hat a_t\).
+\(\widehat{\pi}(S_t)=\int da_t\,\pi(a_t\mid S_t)\widehat{a}_t\).
 For a discrete action space, the integral is replaced by a sum.
 
 Let \(\pi_\theta\) denote a policy parameterized by \(\theta\).  For the

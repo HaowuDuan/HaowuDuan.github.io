@@ -14,6 +14,13 @@ async function extractArticle(filename) {
   return match[1];
 }
 
+async function extractBody(filename) {
+  const html = await readFile(resolve(previewDirectory, filename), 'utf8');
+  const match = html.match(/<body>\s*([\s\S]*?)\s*<\/body>/);
+  if (!match) throw new Error(`Could not find the body in ${filename}`);
+  return match[1];
+}
+
 const diffusionBody = (await extractArticle('diffusion-notes.html'))
   .replaceAll('assets/diffusion-distribution-paths.svg', '/notes/diffusion-distribution-paths.svg');
 const optimizationBody = (await extractArticle('llm-optimization.html'))
@@ -24,6 +31,8 @@ const cudaBody = (await extractArticle('cuda-notes.html'))
   .replaceAll('assets/cuda/', '/notes/cuda/');
 const rlBody = (await extractArticle('rl-notes.html'))
   .replaceAll('assets/rl/', '/notes/rl/');
+const preTrainingBody = (await extractBody('pre-training.html'))
+  .replaceAll('assets/pre-training/', '/notes/pre-training/');
 
 const diffusionFrontmatter = `---
 title: Diffusion Models and Path Integrals
@@ -122,6 +131,54 @@ sections:
     label: "6."
 ---`;
 
+const postTrainingFrontmatter = `---
+title: Post-Training
+order: 5
+chapterNumber: 5
+math: true
+description: Reinforcement learning, preference optimization, and supervised fine-tuning for language models
+sections:
+  - title: Introduction
+    id: introduction
+    label: "5.1"
+  - title: The LLM Post-Training Problem
+    id: the-llm-post-training-problem
+    label: "5.2"
+  - title: Online Policy-Gradient Methods
+    id: online-policy-gradient-methods
+    label: "5.3"
+  - title: Proximal Policy Optimization
+    id: proximal-policy-optimization
+    label: "5.4"
+  - title: Group-Relative Policy Optimization
+    id: group-relative-policy-optimization
+    label: "5.5"
+  - title: Online and Offline Training
+    id: online-and-offline-training
+    label: "5.6"
+---`;
+
+const preTrainingFrontmatter = `---
+title: Data Pipeline
+order: 3
+chapterNumber: 3
+math: true
+description: Data loading, distributed training, and model-state sharding for large language models
+sections:
+  - title: Data Pipeline
+    id: data-pipeline
+    label: "3.1"
+  - title: Distributed Data Parallel
+    id: distributed-data-parallel-ddp
+    label: "3.2"
+  - title: OLMo Data Organization
+    id: olmo-data-organization-under-ddp
+    label: "3.3"
+  - title: ZeRO and FSDP
+    id: from-ddp-to-zero-and-fsdp
+    label: "3.4"
+---`;
+
 await Promise.all([
   writeFile(
     resolve(repositoryRoot, 'src/content/diffusion-notes/diffusion-models-and-path-integrals.md'),
@@ -143,10 +200,19 @@ await Promise.all([
     resolve(repositoryRoot, 'src/content/rl-notes/introduction.md'),
     `${rlFrontmatter}\n\n${rlBody}\n`,
   ),
+  writeFile(
+    resolve(repositoryRoot, 'src/content/llm-notes/post-training.md'),
+    `${postTrainingFrontmatter}\n\n${rlBody}\n`,
+  ),
+  writeFile(
+    resolve(repositoryRoot, 'src/content/llm-notes/pre-training.md'),
+    `${preTrainingFrontmatter}\n\n${preTrainingBody}\n`,
+  ),
   mkdir(resolve(repositoryRoot, 'public/notes/optimization'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/architecture'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/cuda'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/rl'), { recursive: true }),
+  mkdir(resolve(repositoryRoot, 'public/notes/pre-training'), { recursive: true }),
 ]);
 
 await Promise.all([
@@ -210,6 +276,17 @@ await Promise.all([
     resolve(previewDirectory, 'assets/rl/actor-critic-interface.svg'),
     resolve(repositoryRoot, 'public/notes/rl/actor-critic-interface.svg'),
   ),
+  ...[
+    'ddp-workflow.svg',
+    'fsdp-layer-communication.svg',
+    'olmo-index-workflow.svg',
+    'zero-stage-memory.svg',
+  ].map(filename =>
+    copyFile(
+      resolve(previewDirectory, 'assets/pre-training', filename),
+      resolve(repositoryRoot, 'public/notes/pre-training', filename),
+    ),
+  ),
 ]);
 
-process.stdout.write('Exported the validated diffusion, architecture, conceptual training, CUDA, and RL previews to Astro content.\n');
+process.stdout.write('Exported the validated diffusion, architecture, conceptual training, pre-training, post-training, CUDA, and RL previews to Astro content.\n');
