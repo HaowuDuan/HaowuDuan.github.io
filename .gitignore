@@ -23,6 +23,9 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# general files
+general/
+
 # LaTeX working files (keep source .tex and bibliography .bib files)
 note_drafts/**/.latex-polish/
 note_drafts/**/tmp/
