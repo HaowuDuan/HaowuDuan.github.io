@@ -39,6 +39,14 @@ node render-data-figures.mjs \
   ../note_drafts/data.tex \
   assets/pre-training
 
+node render-model-parallelism-figure.mjs \
+  ../note_drafts/model_parallism.tex \
+  assets/model-parallelism
+
+node render-flash-attention-figure.mjs \
+  ../note_drafts/flashatt.tex \
+  assets/flash-attention
+
 mkdir -p vendor/katex/fonts
 cp ../node_modules/katex/dist/katex.min.css vendor/katex/katex.min.css
 cp ../node_modules/katex/dist/fonts/* vendor/katex/fonts/
@@ -53,7 +61,6 @@ sed '1d' ../drafts/blog1/draft_jimwlk.md | pandoc \
   --output=article.html
 
 cp notes-template.html notes.html
-cp faster-training-template.html faster-training.html
 
 figure_build_dir="$(mktemp -d)"
 test -n "${figure_build_dir:?}"
@@ -139,6 +146,32 @@ node prepare-data-note.mjs \
   pre-training.html \
   ../note_drafts/data.tex
 
+pandoc ../note_drafts/model_parallism.tex \
+  --from=latex \
+  --to=html5 \
+  --mathml \
+  --toc \
+  --toc-depth=3 \
+  --shift-heading-level-by=1 \
+  --template=model-parallelism-template.html \
+  --output=model-parallelism.html
+node prepare-model-parallelism-note.mjs \
+  model-parallelism.html \
+  ../note_drafts/model_parallism.tex
+
+pandoc ../note_drafts/flashatt.tex \
+  --from=latex \
+  --to=html5 \
+  --mathml \
+  --toc \
+  --toc-depth=3 \
+  --shift-heading-level-by=1 \
+  --template=flash-attention-template.html \
+  --output=flash-attention.html
+node prepare-flash-attention-note.mjs \
+  flash-attention.html \
+  ../note_drafts/flashatt.tex
+
 pandoc "${architecture_source_file:?}" \
   --from=latex \
   --to=html5 \
@@ -152,4 +185,4 @@ pandoc "${architecture_source_file:?}" \
   --output=modern-llm-architecture.html
 node prepare-architecture-note.mjs modern-llm-architecture.html
 
-node render-katex.mjs article.html notes.html faster-training.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html rl-notes.html pre-training.html
+node render-katex.mjs article.html notes.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html rl-notes.html pre-training.html model-parallelism.html flash-attention.html

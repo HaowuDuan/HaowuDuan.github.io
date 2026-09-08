@@ -33,6 +33,10 @@ const rlBody = (await extractArticle('rl-notes.html'))
   .replaceAll('assets/rl/', '/notes/rl/');
 const preTrainingBody = (await extractBody('pre-training.html'))
   .replaceAll('assets/pre-training/', '/notes/pre-training/');
+const modelParallelismBody = (await extractArticle('model-parallelism.html'))
+  .replaceAll('assets/model-parallelism/', '/notes/model-parallelism/');
+const flashAttentionBody = (await extractArticle('flash-attention.html'))
+  .replaceAll('assets/flash-attention/', '/notes/flash-attention/');
 
 const diffusionFrontmatter = `---
 title: Diffusion Models and Path Integrals
@@ -133,29 +137,29 @@ sections:
 
 const postTrainingFrontmatter = `---
 title: Post-Training
-order: 5
-chapterNumber: 5
+order: 6
+chapterNumber: 6
 math: true
 description: Reinforcement learning, preference optimization, and supervised fine-tuning for language models
 sections:
   - title: Introduction
     id: introduction
-    label: "5.1"
+    label: "6.1"
   - title: The LLM Post-Training Problem
     id: the-llm-post-training-problem
-    label: "5.2"
+    label: "6.2"
   - title: Online Policy-Gradient Methods
     id: online-policy-gradient-methods
-    label: "5.3"
+    label: "6.3"
   - title: Proximal Policy Optimization
     id: proximal-policy-optimization
-    label: "5.4"
+    label: "6.4"
   - title: Group-Relative Policy Optimization
     id: group-relative-policy-optimization
-    label: "5.5"
+    label: "6.5"
   - title: Online and Offline Training
     id: online-and-offline-training
-    label: "5.6"
+    label: "6.6"
 ---`;
 
 const preTrainingFrontmatter = `---
@@ -177,6 +181,65 @@ sections:
   - title: ZeRO and FSDP
     id: from-ddp-to-zero-and-fsdp
     label: "3.4"
+---`;
+
+const modelParallelismFrontmatter = `---
+title: Model Parallelism
+order: 4
+chapterNumber: 4
+math: true
+description: Tensor, context, pipeline, and expert parallelism through OLMo's process-mesh implementation
+sections:
+  - title: What Model Parallelism Divides
+    id: what-model-parallelism-divides
+    label: "4.1"
+  - title: Process Mesh
+    id: the-process-mesh-assigns-a-job-to-every-rank
+    label: "4.2"
+  - title: Tensor Parallelism
+    id: tensor-parallelism-splits-matrix-multiplication
+    label: "4.3"
+  - title: Context Parallelism
+    id: context-parallelism-splits-a-long-sequence
+    label: "4.4"
+  - title: Pipeline Parallelism
+    id: pipeline-parallelism-splits-the-block-list
+    label: "4.5"
+  - title: Expert Parallelism
+    id: expert-parallelism-splits-the-experts
+    label: "4.6"
+  - title: Parallel Model Construction
+    id: how-olmo-constructs-the-parallel-model
+    label: "4.7"
+---`;
+
+const flashAttentionFrontmatter = `---
+title: Flash Attention
+order: 5
+chapterNumber: 5
+math: true
+description: Exact attention with tiled memory access and online softmax updates
+sections:
+  - title: The Problem
+    id: the-problem-flashattention-solves
+    label: "5.1"
+  - title: The Algorithms
+    id: the-four-flashattention-algorithms
+    label: "5.2"
+  - title: FlashAttention-1
+    id: "sec:fa1"
+    label: "5.2.1"
+  - title: FlashAttention-2
+    id: "sec:fa2"
+    label: "5.2.2"
+  - title: FlashAttention-3
+    id: "sec:fa3"
+    label: "5.2.3"
+    status: todo
+  - title: FlashAttention-4
+    id: "sec:fa4"
+    label: "5.2.4"
+    status: todo
 ---`;
 
 await Promise.all([
@@ -208,11 +271,21 @@ await Promise.all([
     resolve(repositoryRoot, 'src/content/llm-notes/pre-training.md'),
     `${preTrainingFrontmatter}\n\n${preTrainingBody}\n`,
   ),
+  writeFile(
+    resolve(repositoryRoot, 'src/content/llm-notes/model-parallelism.md'),
+    `${modelParallelismFrontmatter}\n\n${modelParallelismBody}\n`,
+  ),
+  writeFile(
+    resolve(repositoryRoot, 'src/content/llm-notes/flash-attention.md'),
+    `${flashAttentionFrontmatter}\n\n${flashAttentionBody}\n`,
+  ),
   mkdir(resolve(repositoryRoot, 'public/notes/optimization'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/architecture'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/cuda'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/rl'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/pre-training'), { recursive: true }),
+  mkdir(resolve(repositoryRoot, 'public/notes/model-parallelism'), { recursive: true }),
+  mkdir(resolve(repositoryRoot, 'public/notes/flash-attention'), { recursive: true }),
 ]);
 
 await Promise.all([
@@ -287,6 +360,14 @@ await Promise.all([
       resolve(repositoryRoot, 'public/notes/pre-training', filename),
     ),
   ),
+  copyFile(
+    resolve(previewDirectory, 'assets/model-parallelism/olmo-parallel-construction.svg'),
+    resolve(repositoryRoot, 'public/notes/model-parallelism/olmo-parallel-construction.svg'),
+  ),
+  copyFile(
+    resolve(previewDirectory, 'assets/flash-attention/flashattention-tile-dataflow.svg'),
+    resolve(repositoryRoot, 'public/notes/flash-attention/flashattention-tile-dataflow.svg'),
+  ),
 ]);
 
-process.stdout.write('Exported the validated diffusion, architecture, conceptual training, pre-training, post-training, CUDA, and RL previews to Astro content.\n');
+process.stdout.write('Exported the validated diffusion, architecture, conceptual training, pre-training, model-parallelism, Flash Attention, post-training, CUDA, and RL previews to Astro content.\n');

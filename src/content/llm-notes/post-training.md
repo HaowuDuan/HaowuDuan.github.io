@@ -1,28 +1,28 @@
 ---
 title: Post-Training
-order: 5
-chapterNumber: 5
+order: 6
+chapterNumber: 6
 math: true
 description: Reinforcement learning, preference optimization, and supervised fine-tuning for language models
 sections:
   - title: Introduction
     id: introduction
-    label: "5.1"
+    label: "6.1"
   - title: The LLM Post-Training Problem
     id: the-llm-post-training-problem
-    label: "5.2"
+    label: "6.2"
   - title: Online Policy-Gradient Methods
     id: online-policy-gradient-methods
-    label: "5.3"
+    label: "6.3"
   - title: Proximal Policy Optimization
     id: proximal-policy-optimization
-    label: "5.4"
+    label: "6.4"
   - title: Group-Relative Policy Optimization
     id: group-relative-policy-optimization
-    label: "5.5"
+    label: "6.5"
   - title: Online and Offline Training
     id: online-and-offline-training
-    label: "5.6"
+    label: "6.6"
 ---
 
 <h2 id="introduction">Introduction</h2>

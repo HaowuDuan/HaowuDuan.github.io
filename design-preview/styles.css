@@ -795,10 +795,16 @@ a:hover {
 }
 
 .prose pre code {
+  display: block;
   border: 0;
   background: transparent;
   font-size: inherit;
+  line-height: inherit;
   padding: 0;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  -webkit-text-size-adjust: 100%;
 }
 
 .prose table {
@@ -835,6 +841,18 @@ a:hover {
   width: min(56rem, calc(100vw - 2rem));
   margin: 2.75rem 50%;
   transform: translateX(-50%);
+}
+
+.prose .center {
+  width: min(52rem, calc(100vw - 2rem));
+  margin: 2rem 50%;
+  transform: translateX(-50%);
+  overflow-x: auto;
+  font-family: var(--ui);
+}
+
+.prose .center p {
+  text-align: center;
 }
 
 .prose figure img,

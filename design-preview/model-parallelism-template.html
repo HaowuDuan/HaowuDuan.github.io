@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Tensor, context, pipeline, and expert parallelism through OLMo's process-mesh implementation">
+    <title>Model Parallelism — LLM Notes — Design Preview</title>
+    <link rel="stylesheet" href="vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="preview.js"></script>
+  </head>
+  <body>
+    <div class="review-bar">Local design review · Model Parallelism · not published</div>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="index.html"><strong>Haowu</strong> Duan</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="index.html">about</a>
+          <a href="blog.html">blog</a>
+          <a href="publications.html">publications</a>
+          <a href="projects.html">projects</a>
+          <a href="repositories.html">repositories</a>
+          <a href="cv.html">CV</a>
+          <a href="notes.html" aria-current="page">notes</a>
+        </nav>
+      </div>
+    </header>
+
+    <nav class="notes-subnav" aria-label="Note collections">
+      <div class="notes-subnav__inner">
+        <a href="notes.html" aria-current="page">LLM</a>
+        <a href="diffusion-notes.html">Diffusion Models</a>
+        <a href="rl-notes.html">Reinforcement Learning</a>
+        <a href="cuda-notes.html#gpu-and-cuda">GPUs</a>
+      </div>
+    </nav>
+
+    <main class="page-shell book-layout">
+      <aside class="book-sidebar" aria-label="LLM note contents" data-article-toc>
+        <h2><a href="notes.html">LLM Notes</a></h2>
+        <ol class="chapter-list">
+          <li><a href="notes.html" data-status="finished">Preface</a></li>
+          <li><a href="modern-llm-architecture.html#attention" data-status="finished">1. Modern LLM Architecture</a></li>
+          <li><a href="llm-optimization.html#one-parameter-in-a-smooth-loss" data-status="finished">2. Conceptual Introduction to Training</a></li>
+          <li><a href="pre-training.html#data-pipeline" data-status="finished">3. Data Pipeline</a></li>
+          <li>
+            <a href="#what-model-parallelism-divides" data-status="finished" aria-current="page">4. Model Parallelism</a>
+            <ol class="chapter-sublist">
+              <li><a href="#what-model-parallelism-divides" data-status="finished">4.1 What Model Parallelism Divides</a></li>
+              <li><a href="#the-process-mesh-assigns-a-job-to-every-rank" data-status="finished">4.2 Process Mesh</a></li>
+              <li><a href="#tensor-parallelism-splits-matrix-multiplication" data-status="finished">4.3 Tensor Parallelism</a></li>
+              <li><a href="#context-parallelism-splits-a-long-sequence" data-status="finished">4.4 Context Parallelism</a></li>
+              <li><a href="#pipeline-parallelism-splits-the-block-list" data-status="finished">4.5 Pipeline Parallelism</a></li>
+              <li><a href="#expert-parallelism-splits-the-experts" data-status="finished">4.6 Expert Parallelism</a></li>
+              <li><a href="#how-olmo-constructs-the-parallel-model" data-status="finished">4.7 Parallel Model Construction</a></li>
+            </ol>
+          </li>
+          <li><a href="flash-attention.html" data-status="finished">5. Flash Attention</a></li>
+          <li><a href="rl-notes.html#introduction" data-status="finished">6. Post-Training</a></li>
+          <li><span class="disabled">7. Inference</span></li>
+          <li><span class="disabled">Appendix A. Activation Functions</span></li>
+        </ol>
+      </aside>
+
+      <div class="note-content">
+        <details class="book-mobile-nav" data-responsive-details data-article-toc>
+          <summary>Contents · Model Parallelism</summary>
+          <ol class="chapter-list">
+            <li><a href="#what-model-parallelism-divides" data-status="finished">4.1 What Model Parallelism Divides</a></li>
+            <li><a href="#the-process-mesh-assigns-a-job-to-every-rank" data-status="finished">4.2 Process Mesh</a></li>
+            <li><a href="#tensor-parallelism-splits-matrix-multiplication" data-status="finished">4.3 Tensor Parallelism</a></li>
+            <li><a href="#context-parallelism-splits-a-long-sequence" data-status="finished">4.4 Context Parallelism</a></li>
+            <li><a href="#pipeline-parallelism-splits-the-block-list" data-status="finished">4.5 Pipeline Parallelism</a></li>
+            <li><a href="#expert-parallelism-splits-the-experts" data-status="finished">4.6 Expert Parallelism</a></li>
+            <li><a href="#how-olmo-constructs-the-parallel-model" data-status="finished">4.7 Parallel Model Construction</a></li>
+          </ol>
+        </details>
+
+        <header class="article-header">
+          <p class="eyebrow">LLM Notes · Chapter 4</p>
+          <h1 class="article-title">Model Parallelism</h1>
+          <p class="article-deck">Tensor, context, pipeline, and expert parallelism through OLMo's process-mesh implementation.</p>
+        </header>
+
+        <article class="prose" data-linked-headings>
+$body$
+        </article>
+
+        <nav class="chapter-footer" aria-label="Chapter navigation">
+          <a href="pre-training.html">← Data Pipeline</a>
+          <a href="flash-attention.html">Flash Attention →</a>
+        </nav>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>Draft note · local preview only</span>
+        <a href="notes.html">LLM notes</a>
+      </div>
+    </footer>
+  </body>
+</html>

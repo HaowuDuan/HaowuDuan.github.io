@@ -39,10 +39,43 @@ function splitAlignRows(tex) {
   const body = tex.match(
     /\\begin\{align\*?\}([\s\S]*?)\\end\{align\*?\}/,
   )?.[1] ?? '';
+  const rows = [];
+  let rowStart = 0;
+  let braceDepth = 0;
+  let environmentDepth = 0;
 
-  return body
-    .split(/\\\\(?:\s*\[[^\]]*\])?/g)
-    .filter(row => row.trim().length > 0);
+  for (let index = 0; index < body.length; index += 1) {
+    if (body[index] === '\\') {
+      const environment = body.slice(index).match(/^\\(begin|end)\{[^}]+\}/);
+      if (environment) {
+        environmentDepth += environment[1] === 'begin' ? 1 : -1;
+        index += environment[0].length - 1;
+        continue;
+      }
+
+      if (
+        body[index + 1] === '\\'
+        && braceDepth === 0
+        && environmentDepth === 0
+      ) {
+        rows.push(body.slice(rowStart, index));
+        index += 1;
+        const spacing = body.slice(index + 1).match(/^\s*\[[^\]]*\]/)?.[0] ?? '';
+        index += spacing.length;
+        rowStart = index + 1;
+        continue;
+      }
+
+      index += 1;
+      continue;
+    }
+
+    if (body[index] === '{') braceDepth += 1;
+    else if (body[index] === '}') braceDepth -= 1;
+  }
+
+  rows.push(body.slice(rowStart));
+  return rows.filter(row => row.trim().length > 0);
 }
 
 function labelsIn(tex) {
