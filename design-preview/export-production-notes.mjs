@@ -37,6 +37,8 @@ const modelParallelismBody = (await extractArticle('model-parallelism.html'))
   .replaceAll('assets/model-parallelism/', '/notes/model-parallelism/');
 const flashAttentionBody = (await extractArticle('flash-attention.html'))
   .replaceAll('assets/flash-attention/', '/notes/flash-attention/');
+const optimalTransportBody = (await extractArticle('optimal-transport.html'))
+  .replaceAll('assets/optimal-transport/', '/notes/optimal-transport/');
 
 const diffusionFrontmatter = `---
 title: Diffusion Models and Path Integrals
@@ -242,6 +244,34 @@ sections:
     status: todo
 ---`;
 
+const optimalTransportFrontmatter = `---
+title: Optimal Transport, Gradient Flow, and Schrödinger Bridges
+order: 1
+math: true
+description: Transport plans, Sinkhorn scaling, Wasserstein gradient flow, and Schrödinger bridges
+sections:
+  - title: Moving Mass at Minimum Cost
+    id: moving-mass-at-minimum-cost
+    label: "1."
+  - title: Transport Maps and Transport Plans
+    id: transport-maps-and-transport-plans
+    label: "2."
+  - title: The Finite-Dimensional Linear Program
+    id: the-finite-dimensional-linear-program
+    label: "3."
+  - title: Entropic Transport and the Sinkhorn Algorithm
+    id: entropic-transport-and-the-sinkhorn-algorithm
+    label: "4."
+  - title: Wasserstein Gradient Flow
+    id: wasserstein-gradient-flow
+    label: "5."
+  - title: The Schrödinger Bridge
+    id: the-schrödinger-bridge
+    label: "6."
+---`;
+
+await mkdir(resolve(repositoryRoot, 'src/content/optimal-transport-notes'), { recursive: true });
+
 await Promise.all([
   writeFile(
     resolve(repositoryRoot, 'src/content/diffusion-notes/diffusion-models-and-path-integrals.md'),
@@ -279,6 +309,10 @@ await Promise.all([
     resolve(repositoryRoot, 'src/content/llm-notes/flash-attention.md'),
     `${flashAttentionFrontmatter}\n\n${flashAttentionBody}\n`,
   ),
+  writeFile(
+    resolve(repositoryRoot, 'src/content/optimal-transport-notes/optimal-transport-gradient-flow-and-schrodinger-bridges.md'),
+    `${optimalTransportFrontmatter}\n\n${optimalTransportBody}\n`,
+  ),
   mkdir(resolve(repositoryRoot, 'public/notes/optimization'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/architecture'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/cuda'), { recursive: true }),
@@ -286,6 +320,7 @@ await Promise.all([
   mkdir(resolve(repositoryRoot, 'public/notes/pre-training'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/model-parallelism'), { recursive: true }),
   mkdir(resolve(repositoryRoot, 'public/notes/flash-attention'), { recursive: true }),
+  mkdir(resolve(repositoryRoot, 'public/notes/optimal-transport'), { recursive: true }),
 ]);
 
 await Promise.all([
@@ -368,6 +403,10 @@ await Promise.all([
     resolve(previewDirectory, 'assets/flash-attention/flashattention-tile-dataflow.svg'),
     resolve(repositoryRoot, 'public/notes/flash-attention/flashattention-tile-dataflow.svg'),
   ),
+  copyFile(
+    resolve(previewDirectory, 'assets/optimal-transport/schrodinger-reweighting.svg'),
+    resolve(repositoryRoot, 'public/notes/optimal-transport/schrodinger-reweighting.svg'),
+  ),
 ]);
 
-process.stdout.write('Exported the validated diffusion, architecture, conceptual training, pre-training, model-parallelism, Flash Attention, post-training, CUDA, and RL previews to Astro content.\n');
+process.stdout.write('Exported the validated diffusion, architecture, conceptual training, pre-training, model-parallelism, Flash Attention, post-training, CUDA, RL, and optimal-transport previews to Astro content.\n');

@@ -1,0 +1,17 @@
+---
+import NotesIndex from '../../components/NotesIndex.astro';
+import { getNotes } from '../../lib/notes';
+
+const chapters = await getNotes('optimal-transport-notes');
+if (chapters.length > 0) {
+  return Astro.redirect(`/optimal-transport/${chapters[0].id}/`);
+}
+---
+
+<NotesIndex
+  title="Optimal Transport"
+  eyebrow="Technical notes"
+  description="Notes on optimal transport, Wasserstein gradient flow, and Schrödinger bridges."
+  basePath="/optimal-transport/"
+  chapters={chapters}
+/>

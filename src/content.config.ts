@@ -47,4 +47,8 @@ export const collections = {
     loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/gpu-notes' }),
     schema: noteSchema,
   }),
+  'optimal-transport-notes': defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/optimal-transport-notes' }),
+    schema: noteSchema,
+  }),
 };

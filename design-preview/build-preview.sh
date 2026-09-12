@@ -47,6 +47,10 @@ node render-flash-attention-figure.mjs \
   ../note_drafts/flashatt.tex \
   assets/flash-attention
 
+node render-optimal-transport-figure.mjs \
+  ../note_drafts/optimal_transport.tex \
+  assets/optimal-transport
+
 mkdir -p vendor/katex/fonts
 cp ../node_modules/katex/dist/katex.min.css vendor/katex/katex.min.css
 cp ../node_modules/katex/dist/fonts/* vendor/katex/fonts/
@@ -172,6 +176,19 @@ node prepare-flash-attention-note.mjs \
   flash-attention.html \
   ../note_drafts/flashatt.tex
 
+pandoc ../note_drafts/optimal_transport.tex \
+  --from=latex \
+  --to=html5 \
+  --mathml \
+  --toc \
+  --toc-depth=3 \
+  --shift-heading-level-by=1 \
+  --template=optimal-transport-template.html \
+  --output=optimal-transport.html
+node prepare-optimal-transport-note.mjs \
+  optimal-transport.html \
+  ../note_drafts/optimal_transport.tex
+
 pandoc "${architecture_source_file:?}" \
   --from=latex \
   --to=html5 \
@@ -185,4 +202,4 @@ pandoc "${architecture_source_file:?}" \
   --output=modern-llm-architecture.html
 node prepare-architecture-note.mjs modern-llm-architecture.html
 
-node render-katex.mjs article.html notes.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html rl-notes.html pre-training.html model-parallelism.html flash-attention.html
+node render-katex.mjs article.html notes.html diffusion-notes.html llm-optimization.html modern-llm-architecture.html cuda-notes.html rl-notes.html pre-training.html model-parallelism.html flash-attention.html optimal-transport.html
