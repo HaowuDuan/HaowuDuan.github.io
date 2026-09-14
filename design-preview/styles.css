@@ -918,6 +918,10 @@ a:hover {
   margin-inline: 0.12em;
 }
 
+.prose .katex .msupsub {
+  margin-inline-start: 0.16em;
+}
+
 .prose .katex-display {
   width: 100%;
   max-width: 100%;

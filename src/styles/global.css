@@ -919,7 +919,7 @@ a:hover {
 }
 
 .prose .katex .msupsub {
-  margin-inline-start: 0.08em;
+  margin-inline-start: 0.16em;
 }
 
 .prose .katex-display {
