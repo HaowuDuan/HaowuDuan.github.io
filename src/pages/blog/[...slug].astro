@@ -17,9 +17,17 @@ const showToc = tocHeadings.length >= 3;
 ---
 
 <Base title={post.data.title} description={post.data.description} math={post.data.math}>
-  <div class:list={['page-shell', 'article-shell', 'article-layout', { 'article-layout--single': !showToc }]}>
+  <Fragment slot="head">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+  </Fragment>
+
+  <div class:list={['page-shell', 'article-shell', 'article-layout', 'blog-post', { 'article-layout--single': !showToc }]}>
     <header class="article-header">
-      <p class="eyebrow">{post.data.tags.length > 0 ? post.data.tags.join(' · ') : 'Writing'}</p>
       <h1 class="article-title">{post.data.title}</h1>
       {post.data.description && <p class="article-deck">{post.data.description}</p>}
       <p class="article-meta">
@@ -27,6 +35,7 @@ const showToc = tocHeadings.length >= 3;
           {post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </time>
       </p>
+      <p class="article-tags">{post.data.tags.length > 0 ? post.data.tags.join(' · ') : 'Writing'}</p>
     </header>
 
     {showToc && <TableOfContents headings={tocHeadings} />}

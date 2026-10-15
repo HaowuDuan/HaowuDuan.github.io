@@ -33,6 +33,7 @@ void math;
   {description && <meta name="twitter:description" content={description} />}
   <meta name="twitter:image" content={socialImage} />
   <link rel="icon" href="/favicon.svg" />
+  <slot name="head" />
   <script is:inline>
     const savedTheme = localStorage.getItem('theme');
     const theme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');

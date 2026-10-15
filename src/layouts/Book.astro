@@ -35,6 +35,15 @@ const currentChapter = chapters[chapterIndex];
 ---
 
 <Base title={title} description={description} math={math}>
+  <Fragment slot="head">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+  </Fragment>
+
   <div class="page-shell book-layout">
     <aside class="book-sidebar" aria-label={`${bookTitle} chapters`}>
       <h2><a href={bookIndex}>{bookTitle}</a></h2>
