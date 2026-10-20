@@ -1,10 +1,10 @@
 cv:
   name: Haowu Duan
-  label: Theoretical Physicist
+  label: Computational Researcher
   email: hwdcgc@gmail.com
   location: Vernon, CT
   image: ""
-  summary: I am a theoretical and computational physicist working on high-energy QCD, quantum information in field theory, and machine learning for non-perturbative physics. My work spans analytical methods, stochastic simulation, Bayesian inference, and GPU computing. I also develop machine-learning models and write technical notes with derivations, code examples, and numerical experiments.
+  summary: I am a computational researcher interested in AI and machine learning, probabilistic modeling, and high-performance computing. I build neural networks, develop differentiable filtering and Bayesian inference methods, and optimize numerical workloads with CUDA and Triton. I also write technical notes on language models, diffusion models, reinforcement learning, and GPU computing. My background is in theoretical and computational physics, with a PhD from North Carolina State University and postdoctoral research at the University of Connecticut.
 
   social_networks:
     - network: GitHub
@@ -43,34 +43,24 @@ cv:
         summary: Department of Physics
 
     Interests:
-      - name: High-energy nuclear physics
-        keywords: "QCD at small Bjorken-x, gluon saturation and the Color Glass Condensate, electron-ion collider physics, and correlations in ultraperipheral nuclear collisions."
+      - name: AI and machine learning
+        keywords: "Language-model architectures and training, diffusion models and score/flow matching, reinforcement learning, neural operators, and efficient neural-network implementation."
 
-      - name: Quantum information and field theory
-        keywords: "Entanglement and entropy in field theory, eigenstate thermalization, functional renormalization group, and critical behavior of field theories."
+      - name: Probabilistic modeling and inference
+        keywords: "Differentiable particle filtering, state-space models, Bayesian inference, Hamiltonian Monte Carlo, stochastic processes, and optimal transport."
 
-      - name: Computational and statistical methods
-        keywords: "Stochastic processes, Monte Carlo simulation, differentiable filtering, Bayesian inference, optimal transport, and machine learning for non-perturbative QCD."
+      - name: High-performance computing
+        keywords: "GPU programming, CUDA and Triton kernels, memory-efficient computation, numerical algorithms, and performance profiling."
+
+      - name: Theoretical and computational physics
+        keywords: "High-energy QCD, quantum information and entanglement in field theory, renormalization group, and Monte Carlo simulation."
 
     Projects:
-      - name: Numerical methods for a six-dimensional Fourier integral
-        category: Numerical physics
-        url: https://github.com/HaowuDuan/FFT_filon
+      - name: Transformer language models from scratch
+        category: Machine learning
         highlights:
-          - "Designed an algorithm for a six-dimensional Fourier integral in a QCD dijet cross-section, reducing dense integration at every momentum to a reusable table and two one-dimensional Hankel transforms."
-          - "Derived Filon quadrature with analytic Bessel moments whose cost is independent of oscillation frequency; implemented momentum-grid sweeps as batched GPU tensor contractions and checked CPU/GPU agreement and convergence."
-          - "Built the table with fused FP64 CUDA kernels, cuBLAS matrix multiplication, and chunking to fit GPU memory. The original build took 10 minutes on an RTX 3090; the revised build took 28 seconds on an A800."
-
-      - name: GPU optimization of a lattice Langevin simulation
-        category: Scientific computing
-        url: https://github.com/HaowuDuan/jimwlk_fast
-        highlights:
-          - "Ported a NumPy simulation of Langevin evolution of SU(3) fields to CuPy. Nsight Compute profiling identified batched 3 × 3 matrix multiplications as the main bottleneck, accounting for 95% of GPU time at 8% occupancy."
-          - "Developed fused CUDA kernels for complex matrix multiplication, Cayley–Hamilton matrix exponentials, and Fourier-space convolution, using mixed FP32/FP64 precision and batching across simulation steps."
-          - "Reduced evolution-step time from 1466 ms to 8.6 ms (170×) and kernel launches from 499 to 13 on an RTX 3090, preserving agreement with baseline observables. A standalone SU(3) matrix-exponential kernel achieved a 72× speedup."
-        links:
-          - label: SU(3) matrix-exponential kernel
-            url: https://github.com/HaowuDuan/SU-3-matrix-exp-kernel
+          - "Implemented attention-based encoder and decoder architectures from scratch in TensorFlow."
+          - "Reproduced GPT-2 in PyTorch, checked it against pretrained Hugging Face weights, and fine-tuned it for text classification."
 
       - name: Differentiable particle filtering for state-space models
         category: Statistical inference
@@ -87,11 +77,24 @@ cv:
           - "Identified and reduced the training memory bottleneck so a model that required an 80 GB A800 could train on a 24 GB RTX 3090."
           - "Fused the main loss evaluation into CUDA kernels, speeding up that computation by 5×."
 
-      - name: Transformer language models from scratch
-        category: Machine learning
+      - name: GPU optimization of a lattice Langevin simulation
+        category: Scientific computing
+        url: https://github.com/HaowuDuan/jimwlk_fast
         highlights:
-          - "Implemented attention-based encoder and decoder architectures from scratch in TensorFlow."
-          - "Reproduced GPT-2 in PyTorch, checked it against pretrained Hugging Face weights, and fine-tuned it for text classification."
+          - "Ported a NumPy simulation of Langevin evolution of SU(3) fields to CuPy. Nsight Compute profiling identified batched 3 × 3 matrix multiplications as the main bottleneck, accounting for 95% of GPU time at 8% occupancy."
+          - "Developed fused CUDA kernels for complex matrix multiplication, Cayley–Hamilton matrix exponentials, and Fourier-space convolution, using mixed FP32/FP64 precision and batching across simulation steps."
+          - "Reduced evolution-step time from 1466 ms to 8.6 ms (170×) and kernel launches from 499 to 13 on an RTX 3090, preserving agreement with baseline observables. A standalone SU(3) matrix-exponential kernel achieved a 72× speedup."
+        links:
+          - label: SU(3) matrix-exponential kernel
+            url: https://github.com/HaowuDuan/SU-3-matrix-exp-kernel
+
+      - name: Numerical methods for a six-dimensional Fourier integral
+        category: Numerical methods
+        url: https://github.com/HaowuDuan/FFT_filon
+        highlights:
+          - "Designed an algorithm for a six-dimensional Fourier integral in a QCD dijet cross-section, reducing dense integration at every momentum to a reusable table and two one-dimensional Hankel transforms."
+          - "Derived Filon quadrature with analytic Bessel moments whose cost is independent of oscillation frequency; implemented momentum-grid sweeps as batched GPU tensor contractions and checked CPU/GPU agreement and convergence."
+          - "Built the table with fused FP64 CUDA kernels, cuBLAS matrix multiplication, and chunking to fit GPU memory. The original build took 10 minutes on an RTX 3090; the revised build took 28 seconds on an A800."
 
       - name: Technical notes and independent study
         category: Writing
