@@ -4,7 +4,7 @@ cv:
   email: hwdcgc@gmail.com
   location: Vernon, CT
   image: ""
-  summary: I am a computational researcher interested in AI and machine learning, probabilistic modeling, and high-performance computing. I build neural networks, develop differentiable filtering and Bayesian inference methods, and optimize numerical workloads with CUDA and Triton. I also write technical notes on language models, diffusion models, reinforcement learning, and GPU computing. My background is in theoretical and computational physics, with a PhD from North Carolina State University and postdoctoral research at Central China Normal University and the University of Connecticut.
+  summary: I am a computational scientist with a PhD in physics from NC State and postdoctoral experience at UConn and Central China Normal University. My interests are AI and machine learning, probabilistic modeling, and high-performance computing.
 
   social_networks:
     - network: GitHub
