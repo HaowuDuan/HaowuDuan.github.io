@@ -27,20 +27,6 @@ function formatRange(start: string | number, end: string | number): string {
       {cv.summary && <p class="page-description">{cv.summary}</p>}
     </header>
 
-    {cv.sections?.Interests && (
-      <section class="cv-section" aria-labelledby="interests-heading">
-        <h2 id="interests-heading">Research interests</h2>
-        <ol class="cv-list">
-          {cv.sections.Interests.map((entry: any) => (
-            <li class="cv-entry">
-              <div class="cv-date">Current</div>
-              <div><h3>{entry.name}</h3><p>{entry.keywords}</p></div>
-            </li>
-          ))}
-        </ol>
-      </section>
-    )}
-
     {cv.sections?.Projects && (
       <section class="cv-section" aria-labelledby="projects-heading">
         <h2 id="projects-heading">Technical projects</h2>
