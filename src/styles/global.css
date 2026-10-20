@@ -509,6 +509,19 @@ a:hover {
   font-size: 0.8rem;
 }
 
+.cv-highlights {
+  margin: 0.6rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  font-family: var(--reading);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.cv-highlights li + li {
+  margin-top: 0.45rem;
+}
+
 .empty-state {
   max-width: 44rem;
   padding: 1.4rem 0;

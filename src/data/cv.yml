@@ -4,7 +4,7 @@ cv:
   email: hwdcgc@gmail.com
   location: Vernon, CT
   image: ""
-  summary: Theoretical high-energy physicist working on QCD at small Bjorken-x, entanglement in field theory, and applications of ML to non-perturbative QCD.
+  summary: I am a theoretical and computational physicist working on high-energy QCD, quantum information in field theory, and machine learning for non-perturbative physics. My work spans analytical methods, stochastic simulation, Bayesian inference, and GPU computing. I also develop machine-learning models and write technical notes with derivations, code examples, and numerical experiments.
 
   social_networks:
     - network: GitHub
@@ -25,9 +25,10 @@ cv:
         studyType: PhD
         start_date: 2017
         end_date: 2023
+        thesis: "Quantum Information Perspective on High Energy Hadron Wave Function: Entanglement and Correlations"
 
       - institution: Shandong University
-        location: Shandong, China
+        location: Jinan, China
         area: Physics
         studyType: Bachelor of Science
         start_date: 2013
@@ -42,9 +43,88 @@ cv:
         summary: Department of Physics
 
     Interests:
-      - name: Research Areas
-        icon: fa-solid fa-tag
-        keywords: "High energy QCD, entanglement property of field theory, eigenstate thermalization, stochastic process, functional renormalization group, electron-ion collider physics and gluon saturation, critical behavior of field theories"
+      - name: High-energy nuclear physics
+        keywords: "QCD at small Bjorken-x, gluon saturation and the Color Glass Condensate, electron-ion collider physics, and correlations in ultraperipheral nuclear collisions."
+
+      - name: Quantum information and field theory
+        keywords: "Entanglement and entropy in field theory, eigenstate thermalization, functional renormalization group, and critical behavior of field theories."
+
+      - name: Computational and statistical methods
+        keywords: "Stochastic processes, Monte Carlo simulation, differentiable filtering, Bayesian inference, optimal transport, and machine learning for non-perturbative QCD."
+
+    Projects:
+      - name: Numerical methods for a six-dimensional Fourier integral
+        category: Numerical physics
+        url: https://github.com/HaowuDuan/FFT_filon
+        highlights:
+          - "Designed an algorithm for a six-dimensional Fourier integral in a QCD dijet cross-section, reducing dense integration at every momentum to a reusable table and two one-dimensional Hankel transforms."
+          - "Derived Filon quadrature with analytic Bessel moments whose cost is independent of oscillation frequency; implemented momentum-grid sweeps as batched GPU tensor contractions and checked CPU/GPU agreement and convergence."
+          - "Built the table with fused FP64 CUDA kernels, cuBLAS matrix multiplication, and chunking to fit GPU memory. The original build took 10 minutes on an RTX 3090; the revised build took 28 seconds on an A800."
+
+      - name: GPU optimization of a lattice Langevin simulation
+        category: Scientific computing
+        url: https://github.com/HaowuDuan/jimwlk_fast
+        highlights:
+          - "Ported a NumPy simulation of Langevin evolution of SU(3) fields to CuPy. Nsight Compute profiling identified batched 3 × 3 matrix multiplications as the main bottleneck, accounting for 95% of GPU time at 8% occupancy."
+          - "Developed fused CUDA kernels for complex matrix multiplication, Cayley–Hamilton matrix exponentials, and Fourier-space convolution, using mixed FP32/FP64 precision and batching across simulation steps."
+          - "Reduced evolution-step time from 1466 ms to 8.6 ms (170×) and kernel launches from 499 to 13 on an RTX 3090, preserving agreement with baseline observables. A standalone SU(3) matrix-exponential kernel achieved a 72× speedup."
+        links:
+          - label: SU(3) matrix-exponential kernel
+            url: https://github.com/HaowuDuan/SU-3-matrix-exp-kernel
+
+      - name: Differentiable particle filtering for state-space models
+        category: Statistical inference
+        url: https://github.com/HaowuDuan/hmc_ot_torch
+        highlights:
+          - "Built a PyTorch library for continuous state-space models with Kalman, extended and unscented Kalman, bootstrap particle, and deterministic and stochastic particle-flow filters, with applications to stochastic-volatility and tracking models."
+          - "Made particle resampling differentiable using entropy-regularized Sinkhorn transport and derived implicit gradients at the fixed point."
+          - "Combined the filters with Hamiltonian Monte Carlo for Bayesian parameter inference; checked posteriors against an exact Kalman reference and recovered observation-noise parameters with multi-chain rank-normalized R-hat ≤ 1.01."
+          - "Reduced likelihood-and-gradient evaluation from 42.5 s to 0.52 s (82×) on a stochastic-volatility benchmark using fused Triton kernels, specialized gradients, and GPU graph replay, compared with the initial PyTorch implementation."
+
+      - name: Memory optimization of a physics-informed neural network
+        category: Machine learning
+        highlights:
+          - "Identified and reduced the training memory bottleneck so a model that required an 80 GB A800 could train on a 24 GB RTX 3090."
+          - "Fused the main loss evaluation into CUDA kernels, speeding up that computation by 5×."
+
+      - name: Transformer language models from scratch
+        category: Machine learning
+        highlights:
+          - "Implemented attention-based encoder and decoder architectures from scratch in TensorFlow."
+          - "Reproduced GPT-2 in PyTorch, checked it against pretrained Hugging Face weights, and fine-tuned it for text classification."
+
+      - name: Technical notes and independent study
+        category: Writing
+        highlights:
+          - "Write and maintain notes on language-model architectures and training, CUDA programming and GPU performance, diffusion models, reinforcement learning, and optimal transport."
+          - "Develop explanations from first principles, with detailed derivations supported by diagrams, code examples, and profiling experiments."
+        links:
+          - label: Language models
+            url: /llm-book/
+          - label: GPUs
+            url: /gpus/
+          - label: Diffusion models
+            url: /diffusion-models/
+          - label: Reinforcement learning
+            url: /reinforcement-learning/
+          - label: Optimal transport
+            url: /optimal-transport/
+
+    Selected Publications:
+      - title: "CGC-py: A Monte Carlo Event Generator for Gluon Saturation Physics"
+        authors: "Duan, H.; Yi, C.; Dai, S.-W.; Wei, S.-Y.; Zhao, W.; et al."
+        year: 2026
+        arxiv: "2609.03434"
+
+      - title: "Fourier Transforms of Color Glass Condensate Multi-Wilson-Line Correlators via Filon Quadrature"
+        authors: "Duan, H.; Dai, S.-W.; Yi, C.; Zhao, W."
+        year: 2026
+        arxiv: "2608.18589"
+
+      - title: "Unbiased Data-Driven Determination of the Nuclear Dipole Amplitude in the Color Glass Condensate"
+        authors: "Dai, S.-W.; Duan, H.; Pang, L.-G.; Qin, G.-Y.; Wei, S.-Y.; et al."
+        year: 2026
+        arxiv: "2607.27603"
 
     Talks and Conferences:
       - company: Lawrence Berkeley National Laboratory
@@ -200,5 +280,14 @@ cv:
         end_date: 2019-03
 
     Skills:
-      - name: Programming
-        keywords: "Mathematica, Python, Julia"
+      - name: Programming and computing
+        keywords: "Python, Julia, Mathematica, PyTorch, TensorFlow, and high-performance computing clusters."
+
+      - name: GPU computing
+        keywords: "CUDA, Triton, and CuPy; custom kernels and kernel fusion; mixed FP32/FP64 precision; GPU graph replay; roofline-guided profiling with Nsight Compute."
+
+      - name: Machine learning
+        keywords: "Transformers and language models, recurrent neural networks, neural operators, physics-informed neural networks, diffusion models and score/flow matching, and fine-tuning including GRPO-based reinforcement learning."
+
+      - name: Mathematics and statistics
+        keywords: "Stochastic processes and stochastic differential equations; Monte Carlo and Markov chain Monte Carlo methods; Hamiltonian Monte Carlo; Bayesian inference; state-space models and particle filtering; optimal transport; statistical field theory and renormalization group."

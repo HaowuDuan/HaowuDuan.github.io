@@ -56,6 +56,7 @@ function formatRange(start: string | number, end: string | number): string {
                 <h3>{entry.studyType} in {entry.area}</h3>
                 <p>{entry.institution}</p>
                 {entry.location && <p class="cv-detail">{entry.location}</p>}
+                {entry.thesis && <p><strong>Thesis:</strong> {entry.thesis}</p>}
               </div>
             </li>
           ))}
@@ -77,6 +78,70 @@ function formatRange(start: string | number, end: string | number): string {
       </section>
     )}
 
+    {cv.sections?.Projects && (
+      <section class="cv-section" aria-labelledby="projects-heading">
+        <h2 id="projects-heading">Research and projects</h2>
+        <ol class="cv-list">
+          {cv.sections.Projects.map((entry: any) => (
+            <li class="cv-entry">
+              <div class="cv-date">{entry.category}</div>
+              <div>
+                <h3>
+                  {entry.url ? <a href={entry.url} target="_blank" rel="noopener">{entry.name}</a> : entry.name}
+                </h3>
+                <ul class="cv-highlights">
+                  {entry.highlights.map((highlight: string) => <li>{highlight}</li>)}
+                </ul>
+                {entry.links && (
+                  <div class="publication-links">
+                    {entry.links.map((link: any) => <a href={link.url}>{link.label}</a>)}
+                  </div>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {cv.sections?.Skills && (
+      <section class="cv-section" aria-labelledby="skills-heading">
+        <h2 id="skills-heading">Skills and methods</h2>
+        <ol class="cv-list">
+          {cv.sections.Skills.map((entry: any) => (
+            <li class="cv-entry">
+              <div class="cv-date">{entry.name}</div>
+              <div><p>{entry.keywords}</p></div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {cv.sections?.['Selected Publications'] && (
+      <section class="cv-section" aria-labelledby="publications-heading">
+        <h2 id="publications-heading">Selected publications</h2>
+        <ol class="cv-list">
+          {cv.sections['Selected Publications'].map((entry: any) => (
+            <li class="cv-entry">
+              <div class="cv-date">{entry.year}</div>
+              <div>
+                <h3>{entry.title}</h3>
+                <p>{entry.authors}</p>
+                <div class="publication-links">
+                  <a href={`https://arxiv.org/abs/${entry.arxiv}`} target="_blank" rel="noopener">arXiv:{entry.arxiv}</a>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div class="contact-links">
+          <a href="/publications/">Publications on this site</a>
+          <a href="https://inspirehep.net/authors/2036679" target="_blank" rel="noopener">Full list on INSPIRE-HEP</a>
+        </div>
+      </section>
+    )}
+
     {cv.sections?.['Talks and Conferences'] && (
       <section class="cv-section" aria-labelledby="talks-heading">
         <h2 id="talks-heading">Talks and conferences</h2>
@@ -95,18 +160,5 @@ function formatRange(start: string | number, end: string | number): string {
       </section>
     )}
 
-    {cv.sections?.Skills && (
-      <section class="cv-section" aria-labelledby="skills-heading">
-        <h2 id="skills-heading">Skills</h2>
-        <ol class="cv-list">
-          {cv.sections.Skills.map((entry: any) => (
-            <li class="cv-entry">
-              <div class="cv-date">{entry.name}</div>
-              <div><h3>{entry.keywords}</h3></div>
-            </li>
-          ))}
-        </ol>
-      </section>
-    )}
   </div>
 </Base>
